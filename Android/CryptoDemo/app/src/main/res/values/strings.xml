@@ -1,0 +1,7 @@
+<resources>
+	<string name="app_name">CryptoDemo</string>
+	<string name="action">Action</string>
+	<string name="input_text">Input Text:</string>
+	<string name="encrypted_text">Encrypted Text:</string>
+	<string name="decrypted_text">Decrypted Text:</string>
+</resources>

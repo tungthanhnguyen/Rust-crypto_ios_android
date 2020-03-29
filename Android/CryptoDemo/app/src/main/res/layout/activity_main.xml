@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:layout_marginTop="5dp"
+	android:orientation="vertical"
+	android:padding="5dp"
+	tools:context="com.comtasoft.cryptodemo.MainActivity">
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="5dp">
+
+		<TextView
+			android:id="@+id/lbl_inputText"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/input_text" />
+
+		<EditText
+			android:id="@+id/edtMess"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="5dp"
+			android:importantForAutofill="no"
+			android:inputType="text"
+			android:labelFor="@id/lbl_inputText" />
+	</LinearLayout>
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<Button
+			android:id="@+id/btnAction"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:onClick="OnAction"
+			android:text="@string/action"
+			android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+	</LinearLayout>
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="5dp">
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"
+			android:text="@string/encrypted_text"/>
+
+		<TextView
+			android:id="@+id/lblEncryptedText"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"
+			android:layout_marginStart="5dp"
+			android:freezesText="true"/>
+	</LinearLayout>
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="5dp">
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"
+			android:text="@string/decrypted_text"/>
+
+		<TextView
+			android:id="@+id/lblDecryptedText"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"
+			android:layout_marginStart="5dp"
+			android:freezesText="true"/>
+	</LinearLayout>
+
+</LinearLayout>

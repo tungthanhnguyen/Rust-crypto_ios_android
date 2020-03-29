@@ -1,0 +1,71 @@
+CXX = clang++ -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mmacosx-version-min=10.12 -stdlib=libc++
+
+OBJS_OUTPUT_DIR = ./Objs
+APP_OUTPUT_DIR = ./Bin
+APP_NAME = app
+TOP_SRC_DIR = ../../../formatlibs/wxWidgets-3.1.3
+SRC_DIR = .
+LIB_RUST_NAME = rust_crypto
+LIB_RUST_FILE_NAME = librust_crypto.a
+RUST_TARGET = x86_64-apple-darwin
+CORELIB_DIR = ../Backend/$(LIB_RUST_NAME)
+
+WX_RELEASE = 3.1
+WX_VERSION = $(WX_RELEASE).3
+
+all: CreateOutputDirs MakeApp BuildAppPack
+
+CreateOutputDirs:
+	@if [ ! -e $(OBJS_OUTPUT_DIR) ]; \
+	then \
+		mkdir $(OBJS_OUTPUT_DIR); \
+	fi \
+
+	@if [ ! -e $(APP_OUTPUT_DIR) ]; \
+	then \
+		mkdir $(APP_OUTPUT_DIR); \
+	fi
+
+MakeApp: BuildCoreLib $(OBJS_OUTPUT_DIR)/app.o $(OBJS_OUTPUT_DIR)/MainFrame.o
+	$(CXX) -o $(APP_OUTPUT_DIR)/$(APP_NAME) $(OBJS_OUTPUT_DIR)/app.o $(OBJS_OUTPUT_DIR)/MainFrame.o \
+		$(CORELIB_DIR)/target/$(RUST_TARGET)/release/$(LIB_RUST_FILE_NAME) `wx-config --libs`
+
+
+
+BuildAppPack: $(TOP_SRC_DIR)/src/osx/carbon/Info.plist.in $(TOP_SRC_DIR)/src/osx/carbon/wxmac.icns
+	mkdir -p $(APP_OUTPUT_DIR)/$(APP_NAME).app/Contents/MacOS
+	mkdir -p $(APP_OUTPUT_DIR)/$(APP_NAME).app/Contents/Resources
+
+	sed -e "s/IDENTIFIER/`echo $(SRC_DIR) | sed -e 's,\.\./,,g' | sed -e 's,/,.,g'`/" \
+		-e "s/EXECUTABLE/$(APP_NAME)/" \
+		-e "s/VERSION/$(WX_VERSION)/" \
+	$(TOP_SRC_DIR)/src/osx/carbon/Info.plist.in > $(APP_OUTPUT_DIR)/$(APP_NAME).app/Contents/Info.plist
+
+	/bin/echo "APPL????" > $(APP_OUTPUT_DIR)/$(APP_NAME).app/Contents/PkgInfo
+
+	ln -f $(APP_OUTPUT_DIR)/$(APP_NAME) $(APP_OUTPUT_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
+
+	cp -f $(TOP_SRC_DIR)/src/osx/carbon/wxmac.icns $(APP_OUTPUT_DIR)/$(APP_NAME).app/Contents/Resources/wxmac.icns
+
+	rm -f $(APP_OUTPUT_DIR)/$(APP_NAME)
+
+
+
+BuildCoreLib: $(CORELIB_DIR)/src/lib.rs $(CORELIB_DIR)/Cargo.toml
+	cargo build --target $(RUST_TARGET) --release --manifest-path $(CORELIB_DIR)/Cargo.toml
+
+$(OBJS_OUTPUT_DIR)/app.o: app.h app.cpp MainFrame.h MainFrame.cpp
+	$(CXX) `wx-config --cxxflags` -c app.cpp -o $(OBJS_OUTPUT_DIR)/app.o
+
+$(OBJS_OUTPUT_DIR)/MainFrame.o: MainFrame.h MainFrame.cpp
+	$(CXX) `wx-config --cxxflags` -c MainFrame.cpp -o $(OBJS_OUTPUT_DIR)/MainFrame.o
+
+clear:
+	@if [ -e $(OBJS_OUTPUT_DIR) ]; \
+	then \
+		rm -rf $(OBJS_OUTPUT_DIR); \
+	fi
+	rm -rf $(CORELIB_DIR)/target/$(RUST_TARGET)
+
+clean: clear
+	rm -rf $(APP_OUTPUT_DIR)/$(APP_NAME).app

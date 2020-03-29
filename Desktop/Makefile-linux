@@ -1,0 +1,45 @@
+CXX = clang++ -std=c++17
+
+OBJS_OUTPUT_DIR = ./Objs
+APP_OUTPUT_DIR = ./Bin
+APP_NAME = app
+LIB_RUST_NAME = rust_crypto
+LIB_RUST_FILE_NAME = librust_crypto.a
+RUST_TARGET = x86_64-unknown-linux-gnu
+CORELIB_DIR = ../Backend/$(LIB_RUST_NAME)
+
+all: CreateOutputDirs MakeApp
+
+CreateOutputDirs:
+	@if [ ! -e $(OBJS_OUTPUT_DIR) ]; \
+	then \
+		mkdir $(OBJS_OUTPUT_DIR); \
+	fi \
+
+	@if [ ! -e $(APP_OUTPUT_DIR) ]; \
+	then \
+		mkdir $(APP_OUTPUT_DIR); \
+	fi
+
+MakeApp: BuildCoreLib $(OBJS_OUTPUT_DIR)/app.o $(OBJS_OUTPUT_DIR)/MainFrame.o
+	$(CXX) -o $(APP_OUTPUT_DIR)/$(APP_NAME) $(OBJS_OUTPUT_DIR)/app.o $(OBJS_OUTPUT_DIR)/MainFrame.o \
+		$(CORELIB_DIR)/target/$(RUST_TARGET)/release/$(LIB_RUST_FILE_NAME) `wx-config --libs`
+
+BuildCoreLib: $(CORELIB_DIR)/src/lib.rs $(CORELIB_DIR)/Cargo.toml
+	cargo build --target $(RUST_TARGET) --release --manifest-path $(CORELIB_DIR)/Cargo.toml
+
+$(OBJS_OUTPUT_DIR)/app.o: app.h app.cpp MainFrame.h MainFrame.cpp
+	$(CXX) `wx-config --cxxflags` -c app.cpp -o $(OBJS_OUTPUT_DIR)/app.o
+
+$(OBJS_OUTPUT_DIR)/MainFrame.o: MainFrame.h MainFrame.cpp
+	$(CXX) `wx-config --cxxflags` -c MainFrame.cpp -o $(OBJS_OUTPUT_DIR)/MainFrame.o
+
+clear:
+	@if [ -e $(OBJS_OUTPUT_DIR) ]; \
+	then \
+		rm -rf $(OBJS_OUTPUT_DIR); \
+	fi
+	rm -rf $(CORELIB_DIR)/target/$(RUST_TARGET)
+
+clean: clear
+	rm -f $(APP_OUTPUT_DIR)/$(APP_NAME)

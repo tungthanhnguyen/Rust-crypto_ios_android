@@ -1,0 +1,18 @@
+[package]
+name = "rust_crypto"
+version = "0.1.3"
+authors = ["tungthanhnguyen"]
+edition = "2018"
+publish = false
+
+[dependencies]
+rand = { version = "0.7.2", features = ["wasm-bindgen"] }
+rust-crypto = { version = "0.2.40", path = "../libs/rust-crypto-0.2.40" }
+rustc-serialize = { version = "0.3.24", path = "../libs/rustc-serialize-0.3.24" }
+
+[target.'cfg(target_os="android")'.dependencies]
+jni = { version = "0.14.0", default-features = false }
+
+[lib]
+name = "rust_crypto"
+crate-type = ["staticlib", "cdylib", "rlib"]

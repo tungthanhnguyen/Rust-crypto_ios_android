@@ -1,0 +1,34 @@
+﻿<Page
+	x:Class="CryptoDemo.MainPage"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="using:CryptoDemo"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	mc:Ignorable="d" d:DesignWidth="550.782" d:DesignHeight="307.891">
+
+	<Grid x:Name="FormLayoutGrid">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="Auto" />
+			<ColumnDefinition />
+		</Grid.ColumnDefinitions>
+
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<TextBlock Grid.Row="0" Grid.Column="0" Margin="10, 10, 5, 10" Text="Input Text:" Width="100" HorizontalAlignment="Right" VerticalAlignment="Center" TextAlignment="Right" />
+		<TextBox   Grid.Row="0" Grid.Column="1" Margin="5, 10, 10, 10" x:Name="txtInputText" />
+
+		<Button    Grid.Row="1" Grid.Column="0" Margin="10, 10, 5, 10" x:Name="btnAction" Width="100" HorizontalAlignment="Right" Click="BtnAction_Click">Action</Button>
+
+		<TextBlock Grid.Row="2" Grid.Column="0" Margin="10, 10, 5, 10" Text="Encrypted Text:" Width="100" HorizontalAlignment="Right" VerticalAlignment="Center" TextAlignment="Right" />
+		<TextBox   Grid.Row="2" Grid.Column="1" Margin="5, 10, 10, 10" x:Name="txtEncryptedText" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" />
+
+		<TextBlock Grid.Row="3" Grid.Column="0" Margin="5" Text="Decrypted Text:" Width="100" HorizontalAlignment="Right" VerticalAlignment="Center" TextAlignment="Right" />
+		<TextBlock Grid.Row="3" Grid.Column="1" Margin="10" x:Name="txtDecryptedText" />
+	</Grid>
+</Page>

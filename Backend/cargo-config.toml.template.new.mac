@@ -1,0 +1,8 @@
+[target.aarch64-linux-android]
+linker = "$PWD/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android-clang"
+
+[target.i686-linux-android]
+linker = "$PWD/toolchains/llvm/prebuilt/darwin-x86_64/bin/i686-linux-android-clang"
+
+[target.x86_64-linux-android]
+linker = "$PWD/toolchains/llvm/prebuilt/darwin-x86_64/bin/x86_64-linux-android-clang"
