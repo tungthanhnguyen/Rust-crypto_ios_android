@@ -9,7 +9,7 @@ required for iOS development.
 * ✓ Rust 1.42.0
 * ✓ Android 7.1 – 10.0 (API 25 – 29)
 * ✓ Swift 5.1
-* ✓ iOS 11.4 – 13.3
+* ✓ iOS 11.4 – 13.4
 
 *Note: The purpose of this project is not to create a pure Rust app, but rather
 use Rust as a shared native component between the mobile platforms.*
@@ -74,7 +74,7 @@ Setup
     rustup target add aarch64-apple-ios x86_64-apple-ios
 
     # Android.
-    rustup target add aarch64-linux-android i686-linux-android x86_64-linux-android
+    rustup target add aarch64-linux-android x86_64-linux-android
     ```
 
 7. Copy the content of `cargo-config.toml` (consists of linker information of
@@ -111,7 +111,6 @@ does not contain proper error checking.)
 
     # Android.
     cargo build --target aarch64-linux-android --release
-    cargo build --target i686-linux-android --release
     cargo build --target x86_64-linux-android --release
     ```
 
@@ -125,18 +124,30 @@ does not contain proper error checking.)
     ```sh
     export PATH="$HOME/.cargo/bin:$PATH"
 
-    cargo lipo --release --manifest-path ../../Backend/rust_crypto/Cargo.toml
+    LIB_RUST_NAME=rust_crypto
+    CORELIB_DIR=../../Backend/$LIB_RUST_NAME
+
+    # --xcode-integ determines --release and --targets from XCode's env vars.
+    # Depending your setup, specify the rustup toolchain explicitly.
+    cargo lipo --xcode-integ --manifest-path ../../Backend/rust_crypto/Cargo.toml
+
+    if [ $CONFIGURATION == "Release" ]
+    then
+      cp $CORELIB_DIR/target/universal/release/librust_crypto.a $CORELIB_DIR/target/universal
+    else
+      cp $CORELIB_DIR/target/universal/debug/librust_crypto.a $CORELIB_DIR/target/universal
+    fi
     ```
-    * Build the project once, then update the `Link Binary with Libraries` phase: Click the `+`, then choose `Add Other...`. Navigate to `Backend/rust_crypto/target/universal/release` and select file `librust_crypto.a`.
+    * Build the project once, then update the `Link Binary with Libraries` phase: Click the `+`, then choose `Add Other...`. Navigate to `Backend/rust_crypto/target/universal` and select file `librust_crypto.a`.
     * You need to link to `libresolv.tbd`.
-    * Go back to your `Build Settings` and add `Library Search Paths` for `Debug` and `Release`, pointing to `../../Backend/rust_crypto/target/universal/release`.
+    * Go back to your `Build Settings` and add `Library Search Paths` for `Debug` and `Release`, pointing to `../../Backend/rust_crypto/target/universal`.
     * Add the C header `rust_crypto.h` to allow using the Rust functions from C.
     * Note that `cargo-lipo` does not generate bitcode yet. You must set
       `ENABLE_BITCODE` to `NO`. (See also <http://stackoverflow.com/a/38488617>)
 
 5. Build the Android project.
 
-    Using Android Studio 3.5.3
+    Using Android Studio 3.6.1
 
     When you create an Android Studio project yourself, note the following
     points:
@@ -145,8 +156,7 @@ does not contain proper error checking.)
 
         Copy from Rust | Copy to Android
         ---|---
-        `target/aarch64-linux-android/release/lib???.so` | `src/main/jniLibs/arm64-v8a/lib???.so`
-        `target/i686-linux-android/release/lib???.so` | `src/main/jniLibs/x86/lib???.so`
-        `target/x86_64-linux-android/release/lib???.so` | `src/main/jniLibs/x86_64/lib???.so`
+        `target/aarch64-linux-android/release/librust_crypto.so` | `src/main/jniLibs/arm64-v8a/librust_crypto.so`
+        `target/x86_64-linux-android/release/librust_crypto.so` | `src/main/jniLibs/x86_64/librust_crypto.so`
 
     * Don't forget to ensure the JNI glue between Rust and Java are compatible.

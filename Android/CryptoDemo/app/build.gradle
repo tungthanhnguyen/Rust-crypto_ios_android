@@ -5,7 +5,7 @@ android {
 	buildToolsVersion '30.0.0 rc1'
 	defaultConfig {
 		applicationId "com.comtasoft.cryptodemo"
-		minSdkVersion 21
+		minSdkVersion 23
 		targetSdkVersion 30
 		versionCode 1
 		versionName "0.1.0"

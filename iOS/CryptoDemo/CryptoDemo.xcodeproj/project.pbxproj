@@ -8,17 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		8F4049D9242428FB00C10C95 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FA604F11EF5264900D6B7EF /* libresolv.tbd */; };
-		8F4049DD24242A1E00C10C95 /* librust_crypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F4049DC24242A1E00C10C95 /* librust_crypto.a */; };
 		8FA604DA1EF5204700D6B7EF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA604D91EF5204700D6B7EF /* AppDelegate.swift */; };
 		8FA604DC1EF5204700D6B7EF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA604DB1EF5204700D6B7EF /* ViewController.swift */; };
 		8FA604DF1EF5204700D6B7EF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8FA604DD1EF5204700D6B7EF /* Main.storyboard */; };
 		8FA604E11EF5204700D6B7EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8FA604E01EF5204700D6B7EF /* Assets.xcassets */; };
 		8FA604E41EF5204700D6B7EF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8FA604E21EF5204700D6B7EF /* LaunchScreen.storyboard */; };
 		8FA604FE1EF52F2E00D6B7EF /* RustCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 8FA604FD1EF52F2E00D6B7EF /* RustCrypto.m */; };
+		8FC9CD0024312C7100998A96 /* librust_crypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FC9CCFF24312C7100998A96 /* librust_crypto.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		8F4049DC24242A1E00C10C95 /* librust_crypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librust_crypto.a; path = ../../Backend/rust_crypto/target/universal/release/librust_crypto.a; sourceTree = "<group>"; };
 		8FA604D61EF5204700D6B7EF /* CryptoDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CryptoDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8FA604D91EF5204700D6B7EF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8FA604DB1EF5204700D6B7EF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -31,6 +30,7 @@
 		8FA604FB1EF52F2E00D6B7EF /* CryptoDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CryptoDemo-Bridging-Header.h"; sourceTree = "<group>"; };
 		8FA604FC1EF52F2E00D6B7EF /* RustCrypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RustCrypto.h; sourceTree = "<group>"; };
 		8FA604FD1EF52F2E00D6B7EF /* RustCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RustCrypto.m; sourceTree = "<group>"; };
+		8FC9CCFF24312C7100998A96 /* librust_crypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librust_crypto.a; path = ../../Backend/rust_crypto/target/universal/librust_crypto.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,7 +38,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8F4049DD24242A1E00C10C95 /* librust_crypto.a in Frameworks */,
+				8FC9CD0024312C7100998A96 /* librust_crypto.a in Frameworks */,
 				8F4049D9242428FB00C10C95 /* libresolv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -83,7 +83,7 @@
 		8FA604EB1EF5237500D6B7EF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				8F4049DC24242A1E00C10C95 /* librust_crypto.a */,
+				8FC9CCFF24312C7100998A96 /* librust_crypto.a */,
 				8FA604F11EF5264900D6B7EF /* libresolv.tbd */,
 			);
 			name = Frameworks;
@@ -174,7 +174,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nexport PATH=\"$HOME/.cargo/bin:$PATH\"\ncargo lipo --release --manifest-path ../../Backend/rust_crypto/Cargo.toml\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nexport PATH=\"$HOME/.cargo/bin:$PATH\"\n\nLIB_RUST_NAME=rust_crypto\nCORELIB_DIR=../../Backend/$LIB_RUST_NAME\n\n# --xcode-integ determines --release and --targets from XCode's env vars.\n# Depending your setup, specify the rustup toolchain explicitly.\ncargo lipo --xcode-integ --manifest-path $CORELIB_DIR/Cargo.toml\n\nif [ $CONFIGURATION == \"Release\" ]\nthen\n\tcp $CORELIB_DIR/target/universal/release/librust_crypto.a $CORELIB_DIR/target/universal\nelse\n\tcp $CORELIB_DIR/target/universal/debug/librust_crypto.a $CORELIB_DIR/target/universal\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -352,7 +352,7 @@
 					"$(PROJECT_DIR)",
 					"$(inherited)",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=*]" = ../../Backend/rust_crypto/target/universal/release;
+				"LIBRARY_SEARCH_PATHS[arch=*]" = ../../Backend/rust_crypto/target/universal;
 				PRODUCT_BUNDLE_IDENTIFIER = com.comtasoft.CryptoDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -384,7 +384,7 @@
 					"$(PROJECT_DIR)",
 					"$(inherited)",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=*]" = ../../Backend/rust_crypto/target/universal/release;
+				"LIBRARY_SEARCH_PATHS[arch=*]" = ../../Backend/rust_crypto/target/universal;
 				PRODUCT_BUNDLE_IDENTIFIER = com.comtasoft.CryptoDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
