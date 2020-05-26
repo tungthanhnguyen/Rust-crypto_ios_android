@@ -42,4 +42,7 @@ clear:
 	rm -rf $(CORELIB_DIR)/target/$(RUST_TARGET)
 
 clean: clear
-	rm -f $(APP_OUTPUT_DIR)/$(APP_NAME)
+	@if [ -e $(APP_OUTPUT_DIR) ]; \
+	then \
+		rm -rf $(APP_OUTPUT_DIR); \
+	fi

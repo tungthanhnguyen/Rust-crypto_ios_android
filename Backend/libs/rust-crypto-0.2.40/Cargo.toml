@@ -16,10 +16,10 @@ name = "crypto"
 with-bench = []
 
 [build-dependencies]
-cc = "1.0.47"
+cc = "1.0.54"
 
 [dependencies]
-libc = "0.2.65"
-time = "0.1.42"
-rand = "0.7.2"
+libc = "0.2.70"
+time = "0.2.16"
+rand = "0.7.3"
 rustc-serialize = { version = "0.3.24", path = "../rustc-serialize-0.3.24" }
