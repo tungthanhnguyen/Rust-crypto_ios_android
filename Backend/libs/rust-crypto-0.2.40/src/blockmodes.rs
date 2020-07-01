@@ -410,7 +410,7 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X> {
         }
     }
     fn reset_with_history(&mut self, in_hist: &[u8], out_hist: &[u8]) {
-        self.reset();
+				self.reset();
         cryptoutil::copy_memory(in_hist, &mut self.in_hist);
         cryptoutil::copy_memory(out_hist, &mut self.out_hist);
     }
@@ -741,11 +741,14 @@ pub struct CtrModeX8<A> {
     bytes: OwnedReadBuffer
 }
 
-fn construct_ctr_x8(in_ctr: &[u8], out_ctr_x8: &mut [u8]) {
-    for (i, ctr_i) in out_ctr_x8.chunks_mut(in_ctr.len()).enumerate() {
-        cryptoutil::copy_memory(in_ctr, ctr_i);
-        add_ctr(ctr_i, i as u8);
-    }
+fn construct_ctr_x8(in_ctr: &[u8], out_ctr_x8: &mut [u8])
+{
+	// println!("in_ctr.len() = {}, out_ctr_x8.len() = {}", in_ctr.len(), out_ctr_x8.len());
+	for (i, ctr_i) in out_ctr_x8.chunks_mut(in_ctr.len()).enumerate()
+	{
+		cryptoutil::copy_memory(&in_ctr[0..ctr_i.len()], ctr_i);
+		add_ctr(ctr_i, i as u8);
+	}
 }
 
 impl <A: BlockEncryptorX8> CtrModeX8<A> {

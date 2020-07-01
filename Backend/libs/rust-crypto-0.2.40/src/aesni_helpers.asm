@@ -22,6 +22,14 @@ rust_crypto_aesni_setup_working_key_256 PROC public
   ret
 rust_crypto_aesni_setup_working_key_256 ENDP
 
+rust_crypto_aesni_setup_working_key_512 PROC public
+  ret
+rust_crypto_aesni_setup_working_key_512 ENDP
+
+rust_crypto_aesni_setup_working_key_1024 PROC public
+  ret
+rust_crypto_aesni_setup_working_key_1024 ENDP
+
 rust_crypto_aesni_encrypt_block PROC public
   ret
 rust_crypto_aesni_encrypt_block ENDP

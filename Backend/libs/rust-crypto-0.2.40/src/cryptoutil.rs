@@ -190,13 +190,15 @@ pub fn xor_keystream(dst: &mut[u8], plaintext: &[u8], keystream: &[u8]) {
 
 /// Copy bytes from src to dest
 #[inline]
-pub fn copy_memory(src: &[u8], dst: &mut [u8]) {
-    assert!(dst.len() >= src.len());
-    unsafe {
-        let srcp = src.as_ptr();
-        let dstp = dst.as_mut_ptr();
-        ptr::copy_nonoverlapping(srcp, dstp, src.len());
-    }
+pub fn copy_memory(src: &[u8], dst: &mut [u8])
+{
+	assert!(dst.len() >= src.len());
+	unsafe
+	{
+		let srcp = src.as_ptr();
+		let dstp = dst.as_mut_ptr();
+		ptr::copy_nonoverlapping(srcp, dstp, src.len());
+	}
 }
 
 /// Zero all bytes in dst
@@ -359,84 +361,94 @@ pub trait FixedBuffer {
     fn size(&self) -> usize;
 }
 
-macro_rules! impl_fixed_buffer( ($name:ident, $size:expr) => (
-    impl FixedBuffer for $name {
-        fn input<F: FnMut(&[u8])>(&mut self, input: &[u8], mut func: F) {
-            let mut i = 0;
+macro_rules! impl_fixed_buffer(($name:ident, $size:expr) =>
+(
+	impl FixedBuffer for $name
+	{
+		fn input<F: FnMut(&[u8])>(&mut self, input: &[u8], mut func: F)
+		{
+			let mut i = 0;
 
-            // FIXME: #6304 - This local variable shouldn't be necessary.
-            let size = $size;
+			// FIXME: #6304 - This local variable shouldn't be necessary.
+			let size = $size;
 
-            // If there is already data in the buffer, copy as much as we can into it and process
-            // the data if the buffer becomes full.
-            if self.buffer_idx != 0 {
-                let buffer_remaining = size - self.buffer_idx;
-                if input.len() >= buffer_remaining {
-                        copy_memory(
-                            &input[..buffer_remaining],
-                            &mut self.buffer[self.buffer_idx..size]);
-                    self.buffer_idx = 0;
-                    func(&self.buffer);
-                    i += buffer_remaining;
-                } else {
-                    copy_memory(
-                        input,
-                        &mut self.buffer[self.buffer_idx..self.buffer_idx + input.len()]);
-                    self.buffer_idx += input.len();
-                    return;
-                }
-            }
+			// If there is already data in the buffer, copy as much as we can into it and process
+			// the data if the buffer becomes full.
+			if self.buffer_idx != 0
+			{
+				let buffer_remaining = size - self.buffer_idx;
+				if input.len() >= buffer_remaining
+				{
+					copy_memory(&input[..buffer_remaining],
+					            &mut self.buffer[self.buffer_idx..size]);
+					self.buffer_idx = 0;
+					func(&self.buffer);
+					i += buffer_remaining;
+				}
+				else
+				{
+					copy_memory(input,
+					            &mut self.buffer[self.buffer_idx..self.buffer_idx + input.len()]);
+					self.buffer_idx += input.len();
+					return;
+				}
+			}
 
-            // While we have at least a full buffer size chunks's worth of data, process that data
-            // without copying it into the buffer
-            while input.len() - i >= size {
-                func(&input[i..i + size]);
-                i += size;
-            }
+			// While we have at least a full buffer size chunks's worth of data, process that data
+			// without copying it into the buffer
+			while input.len() - i >= size
+			{
+				func(&input[i..i + size]);
+				i += size;
+			}
 
-            // Copy any input data into the buffer. At this point in the method, the ammount of
-            // data left in the input vector will be less than the buffer size and the buffer will
-            // be empty.
-            let input_remaining = input.len() - i;
-            copy_memory(
-                &input[i..],
-                &mut self.buffer[0..input_remaining]);
-            self.buffer_idx += input_remaining;
-        }
+			// Copy any input data into the buffer. At this point in the method, the ammount of
+			// data left in the input vector will be less than the buffer size and the buffer will
+			// be empty.
+			let input_remaining = input.len() - i;
+			copy_memory(&input[i..],
+			            &mut self.buffer[0..input_remaining]);
+			self.buffer_idx += input_remaining;
+		}
 
-        fn reset(&mut self) {
-            self.buffer_idx = 0;
-        }
+		fn reset(&mut self)
+		{
+			self.buffer_idx = 0;
+		}
 
-        fn zero_until(&mut self, idx: usize) {
-            assert!(idx >= self.buffer_idx);
-            zero(&mut self.buffer[self.buffer_idx..idx]);
-            self.buffer_idx = idx;
-        }
+		fn zero_until(&mut self, idx: usize)
+		{
+			assert!(idx >= self.buffer_idx);
+			zero(&mut self.buffer[self.buffer_idx..idx]);
+			self.buffer_idx = idx;
+		}
 
-        fn next<'s>(&'s mut self, len: usize) -> &'s mut [u8] {
-            self.buffer_idx += len;
-            &mut self.buffer[self.buffer_idx - len..self.buffer_idx]
-        }
+		fn next<'s>(&'s mut self, len: usize) -> &'s mut [u8]
+		{
+			self.buffer_idx += len;
+			&mut self.buffer[self.buffer_idx - len..self.buffer_idx]
+		}
 
-        fn full_buffer<'s>(&'s mut self) -> &'s [u8] {
-            assert!(self.buffer_idx == $size);
-            self.buffer_idx = 0;
-            &self.buffer[..$size]
-        }
+		fn full_buffer<'s>(&'s mut self) -> &'s [u8]
+		{
+			assert!(self.buffer_idx == $size);
+			self.buffer_idx = 0;
+			&self.buffer[..$size]
+		}
 
-        fn current_buffer<'s>(&'s mut self) -> &'s [u8] {
-            let tmp = self.buffer_idx;
-            self.buffer_idx = 0;
-            &self.buffer[..tmp]
-        }
+		fn current_buffer<'s>(&'s mut self) -> &'s [u8]
+		{
+			let tmp = self.buffer_idx;
+			self.buffer_idx = 0;
+			&self.buffer[..tmp]
+		}
 
-        fn position(&self) -> usize { self.buffer_idx }
+		fn position(&self) -> usize { self.buffer_idx }
 
-        fn remaining(&self) -> usize { $size - self.buffer_idx }
+		fn remaining(&self) -> usize { $size - self.buffer_idx }
 
-        fn size(&self) -> usize { $size }
-    }
+		fn size(&self) -> usize { $size }
+	}
 ));
 
 /// A fixed size buffer of 64 bytes useful for cryptographic operations.

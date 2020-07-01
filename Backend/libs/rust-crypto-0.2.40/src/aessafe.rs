@@ -222,6 +222,20 @@ define_aes_impl!(AesSafe256Decryptor, Decryption, 14, 32);
 define_aes_enc!(AesSafe256Encryptor, 14);
 define_aes_dec!(AesSafe256Decryptor, 14);
 
+define_aes_struct!(AesSafe512Encryptor, 22);
+define_aes_struct!(AesSafe512Decryptor, 22);
+define_aes_impl!(AesSafe512Encryptor, Encryption, 22, 64);
+define_aes_impl!(AesSafe512Decryptor, Decryption, 22, 64);
+define_aes_enc!(AesSafe512Encryptor, 22);
+define_aes_dec!(AesSafe512Decryptor, 22);
+
+define_aes_struct!(AesSafe1024Encryptor, 38);
+define_aes_struct!(AesSafe1024Decryptor, 38);
+define_aes_impl!(AesSafe1024Encryptor, Encryption, 38, 128);
+define_aes_impl!(AesSafe1024Decryptor, Decryption, 38, 128);
+define_aes_enc!(AesSafe1024Encryptor, 38);
+define_aes_dec!(AesSafe1024Decryptor, 38);
+
 macro_rules! define_aes_struct_x8(
     (
         $name:ident,
@@ -324,30 +338,48 @@ define_aes_impl_x8!(AesSafe256DecryptorX8, Decryption, 14, 32);
 define_aes_enc_x8!(AesSafe256EncryptorX8, 14);
 define_aes_dec_x8!(AesSafe256DecryptorX8, 14);
 
-fn ffmulx(x: u32) -> u32 {
-    let m1: u32 = 0x80808080;
-    let m2: u32 = 0x7f7f7f7f;
-    let m3: u32 = 0x0000001b;
-    ((x & m2) << 1) ^ (((x & m1) >> 7) * m3)
+define_aes_struct_x8!(AesSafe512EncryptorX8, 22);
+define_aes_struct_x8!(AesSafe512DecryptorX8, 22);
+define_aes_impl_x8!(AesSafe512EncryptorX8, Encryption, 22, 64);
+define_aes_impl_x8!(AesSafe512DecryptorX8, Decryption, 22, 64);
+define_aes_enc_x8!(AesSafe512EncryptorX8, 22);
+define_aes_dec_x8!(AesSafe512DecryptorX8, 22);
+
+define_aes_struct_x8!(AesSafe1024EncryptorX8, 38);
+define_aes_struct_x8!(AesSafe1024DecryptorX8, 38);
+define_aes_impl_x8!(AesSafe1024EncryptorX8, Encryption, 38, 128);
+define_aes_impl_x8!(AesSafe1024DecryptorX8, Decryption, 38, 128);
+define_aes_enc_x8!(AesSafe1024EncryptorX8, 38);
+define_aes_dec_x8!(AesSafe1024DecryptorX8, 38);
+
+fn ffmulx(x: u32) -> u32
+{
+	let m1: u32 = 0x80808080;
+	let m2: u32 = 0x7f7f7f7f;
+	let m3: u32 = 0x0000001b;
+	((x & m2) << 1) ^ (((x & m1) >> 7) * m3)
 }
 
-fn inv_mcol(x: u32) -> u32 {
-    let f2 = ffmulx(x);
-    let f4 = ffmulx(f2);
-    let f8 = ffmulx(f4);
-    let f9 = x ^ f8;
+fn inv_mcol(x: u32) -> u32
+{
+	let f2 = ffmulx(x);
+	let f4 = ffmulx(f2);
+	let f8 = ffmulx(f4);
+	let f9 = x ^ f8;
 
-    f2 ^ f4 ^ f8 ^ (f2 ^ f9).rotate_right(8) ^ (f4 ^ f9).rotate_right(16) ^ f9.rotate_right(24)
+	f2 ^ f4 ^ f8 ^ (f2 ^ f9).rotate_right(8) ^ (f4 ^ f9).rotate_right(16) ^ f9.rotate_right(24)
 }
 
-fn sub_word(x: u32) -> u32 {
-    let bs = bit_slice_4x1_with_u16(x).sub_bytes();
-    un_bit_slice_4x1_with_u16(&bs)
+fn sub_word(x: u32) -> u32
+{
+	let bs = bit_slice_4x1_with_u16(x).sub_bytes();
+	un_bit_slice_4x1_with_u16(&bs)
 }
 
-enum KeyType {
-    Encryption,
-    Decryption
+enum KeyType
+{
+	Encryption,
+	Decryption
 }
 
 // This array is not accessed in any key-dependant way, so there are no timing problems inherent in
@@ -357,48 +389,66 @@ static RCON: [u32; 10] = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 
 // The round keys are created without bit-slicing the key data. The individual implementations bit
 // slice the round keys returned from this function. This function, and the few functions above, are
 // derived from the BouncyCastle AES implementation.
-fn create_round_keys(key: &[u8], key_type: KeyType, round_keys: &mut [[u32; 4]]) {
-    let (key_words, rounds) = match key.len() {
-        16 => (4, 10),
-        24 => (6, 12),
-        32 => (8, 14),
-        _ => panic!("Invalid AES key size.")
-    };
+fn create_round_keys(key: &[u8], key_type: KeyType, round_keys: &mut [[u32; 4]])
+{
+	// println!("create_round_keys : key.len() = {}, round_keys.len() = {}", key.len(), round_keys.len());
+	let (key_words, rounds) = match key.len()
+	{
+		16  => (4,  10),
+		24  => (6,  12),
+		32  => (8,  14),
+		64  => (16, 22),
+		128 => (32, 38),
+		_   => panic!("Invalid AES key size.")
+	};
+	// println!("create_round_keys : key_words = {}, rounds = {}", key_words, rounds);
 
-    // The key is copied directly into the first few round keys
-    let mut j = 0;
-    for i in (0..key.len()).step_up(4) {
-        round_keys[j / 4][j % 4] =
-            (key[i] as u32) |
-            ((key[i+1] as u32) << 8) |
-            ((key[i+2] as u32) << 16) |
-            ((key[i+3] as u32) << 24);
-        j += 1;
-    };
+	// The key is copied directly into the first few round keys
+	let mut j = 0;
+	for i in (0..key.len()).step_up(4)
+	{
+		round_keys[j / 4][j % 4] =
+			(key[i] as u32) |
+			((key[i + 1] as u32) << 8) |
+			((key[i + 2] as u32) << 16) |
+			((key[i + 3] as u32) << 24);
+		j += 1;
+	};
 
-    // Calculate the rest of the round keys
-    for i in key_words..(rounds + 1) * 4 {
-        let mut tmp = round_keys[(i - 1) / 4][(i - 1) % 4];
-        if (i % key_words) == 0 {
-            tmp = sub_word(tmp.rotate_right(8)) ^ RCON[(i / key_words) - 1];
-        } else if (key_words == 8) && ((i % key_words) == 4) {
-            // This is only necessary for AES-256 keys
-            tmp = sub_word(tmp);
-        }
-        round_keys[i / 4][i % 4] = round_keys[(i - key_words) / 4][(i - key_words) % 4] ^ tmp;
-    }
+	// Calculate the rest of the round keys
+	for i in key_words..(rounds + 1) * 4
+	{
+		let mut tmp = round_keys[(i - 1) / 4][(i - 1) % 4];
+		if (i % key_words) == 0
+		{
+			// println!("RCON[(i / key_words) - 1] = {}", RCON[(i / key_words) - 1]);
+			tmp = sub_word(tmp.rotate_right(8)) ^ RCON[(i / key_words) - 1];
+		}
+		else if (key_words == 8) && ((i % key_words) == 4)
+		{
+			// println!("(key_words == 8) && ((i % key_words) == 4)");
+			// This is only necessary for AES-256 keys
+			tmp = sub_word(tmp);
+		}
+		// println!("i = {}, round_keys[i / 4][i % 4] = round_keys[{}][{}]", i, i / 4, i % 4);
+		round_keys[i / 4][i % 4] = round_keys[(i - key_words) / 4][(i - key_words) % 4] ^ tmp;
+	}
 
-    // Decryption round keys require extra processing
-    match key_type {
-        KeyType::Decryption => {
-            for j in 1..rounds {
-                for i in 0..4 {
-                    round_keys[j][i] = inv_mcol(round_keys[j][i]);
-                }
-            }
-        },
-        KeyType::Encryption => { }
-    }
+	// Decryption round keys require extra processing
+	match key_type
+	{
+		KeyType::Decryption =>
+		{
+			for j in 1..rounds
+			{
+				for i in 0..4
+				{
+					round_keys[j][i] = inv_mcol(round_keys[j][i]);
+				}
+			}
+		},
+		KeyType::Encryption => { }
+	}
 }
 
 // This trait defines all of the operations needed for a type to be processed as part of an AES

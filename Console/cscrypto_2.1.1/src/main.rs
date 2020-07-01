@@ -656,9 +656,9 @@ fn do_encrypt(pub_file_path: &str, in_file_path: &str, out_file_path: &str, enc_
 			// Generate random key
 
 			let mut gen = thread_rng();
-			let mut key = vec![0u8; 32];
+			let mut key = vec![0u8; 128];
 			gen.fill(key.as_mut_slice());
-			let mut iv = vec![0u8; 32];
+			let mut iv = vec![0u8; 128];
 			gen.fill(iv.as_mut_slice());
 
 			// End Generate random key
@@ -671,7 +671,7 @@ fn do_encrypt(pub_file_path: &str, in_file_path: &str, out_file_path: &str, enc_
 			// println!("\nlength of buf_compressed = {}\n", buf_compressed.len());
 			// println!("\nAES key = {:?}\n\n    iv = {:?}\n", key, iv);
 
-			let mut cipher = aes::ctr(KeySize::KeySize256, key.as_slice(), iv.as_slice());
+			let mut cipher = aes::ctr(KeySize::KeySize1024, key.as_slice(), iv.as_slice());
 			let mut enc_dat = vec![0u8; buf_compressed.len()];
 			cipher.process(buf_compressed.slice(), enc_dat.as_mut_slice());
 
@@ -685,12 +685,14 @@ fn do_encrypt(pub_file_path: &str, in_file_path: &str, out_file_path: &str, enc_
 					return
 				}
 			};
-			let magic_num: u8 = enc_dat[0].gcd(&enc_dat[1]) + (enc_key.len() as u8);
+			let mut magic_num: u16 = enc_dat[0] as u16;
+			magic_num = magic_num.gcd(&(enc_dat[1] as u16)) + (enc_key.len() as u16);
 			enc_dat.append(&mut enc_key);
-			enc_dat.push(magic_num);
+			enc_dat.extend_from_slice(&magic_num.to_le_bytes());
 
-			let magic_num2: u8 = enc_dat[0].gcd(&enc_dat[1]) + 1; // 1 is indicator of medium encrypt level
-			enc_dat.push(magic_num2);
+			let mut magic_num2: u16 = enc_dat[0] as u16;
+			magic_num2 = magic_num2.gcd(&(enc_dat[1] as u16)) + 1; // 1 is indicator of medium encrypt level
+			enc_dat.extend_from_slice(&magic_num2.to_le_bytes());
 
 			let mut buf_compressed2 = Rebox::from(vec![0u8; BrotliEncoderMaxCompressedSizeMulti(enc_dat.len(), num_threads)]);
 			let _ = brotli_compress_multi_nostd(enc_dat, buf_compressed2.slice_mut(), brotli_compression_level, num_threads, false);
@@ -913,7 +915,9 @@ fn do_decrypt(pri_file_path: &str, in_file_path: &str, out_file_path: &str)
 		println!("Size of encrypted file is wrong");
 		return
 	}
-	let encrypt_level: u8 = buf_decompressed.pop().unwrap() - buf_decompressed[0].gcd(&buf_decompressed[1]);
+	let encrypt_level_raw: [u8; 2] = [buf_decompressed.pop().unwrap(), buf_decompressed.pop().unwrap()];
+	let mut encrypt_level: u16 = u16::from_be_bytes(encrypt_level_raw);
+	encrypt_level = encrypt_level - (buf_decompressed[0].gcd(&buf_decompressed[1]) as u16);
 	// let encrypt_level: u8 = buf.pop().unwrap() - buf[0].gcd(&buf[1]);
 	// println!("encrypt_level = {}", encrypt_level);
 	// End Get encrypt level
@@ -922,7 +926,9 @@ fn do_decrypt(pri_file_path: &str, in_file_path: &str, out_file_path: &str)
 	{
 		// println!("Encrypt level is medium");
 
-		let enc_key_len: usize = (buf_decompressed.pop().unwrap() - buf_decompressed[0].gcd(&buf_decompressed[1])) as usize;
+		let enc_key_len_raw: [u8; 2] = [buf_decompressed.pop().unwrap(), buf_decompressed.pop().unwrap()];
+		let mut enc_key_len: usize = u16::from_be_bytes(enc_key_len_raw) as usize;
+		enc_key_len = enc_key_len - (buf_decompressed[0].gcd(&buf_decompressed[1]) as usize);
 		let mut buf_len = buf_decompressed.len();
 		let enc_key = buf_decompressed.split_off(buf_len - enc_key_len);
 		// let enc_key_len: usize = (buf.pop().unwrap() - buf[0].gcd(&buf[1])) as usize;
@@ -938,9 +944,9 @@ fn do_decrypt(pri_file_path: &str, in_file_path: &str, out_file_path: &str)
 			}
 		};
 		buf_len = key.len();
-		let iv = key.split_off(buf_len - 32);
+		let iv = key.split_off(buf_len - 128);
 
-		let mut cipher = aes::ctr(KeySize::KeySize256, key.as_slice(), iv.as_slice());
+		let mut cipher = aes::ctr(KeySize::KeySize1024, key.as_slice(), iv.as_slice());
 		let mut dec_dat = vec![0u8; buf_decompressed.len()];
 		cipher.process(buf_decompressed.as_slice(), dec_dat.as_mut_slice());
 		// let mut dec_dat = vec![0u8; buf.len()];

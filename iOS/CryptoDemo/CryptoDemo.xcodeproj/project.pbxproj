@@ -18,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8F96D77E247DFA6700C2E4C0 /* CryptoDemo.profdata */ = {isa = PBXFileReference; lastKnownFileType = file; path = CryptoDemo.profdata; sourceTree = "<group>"; };
 		8FA604D61EF5204700D6B7EF /* CryptoDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CryptoDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8FA604D91EF5204700D6B7EF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8FA604DB1EF5204700D6B7EF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -46,12 +47,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8F96D77D247DFA6700C2E4C0 /* OptimizationProfiles */ = {
+			isa = PBXGroup;
+			children = (
+				8F96D77E247DFA6700C2E4C0 /* CryptoDemo.profdata */,
+			);
+			path = OptimizationProfiles;
+			sourceTree = "<group>";
+		};
 		8FA604CD1EF5204700D6B7EF = {
 			isa = PBXGroup;
 			children = (
 				8FA604D81EF5204700D6B7EF /* CryptoDemo */,
 				8FA604D71EF5204700D6B7EF /* Products */,
 				8FA604EB1EF5237500D6B7EF /* Frameworks */,
+				8F96D77D247DFA6700C2E4C0 /* OptimizationProfiles */,
 			);
 			sourceTree = "<group>";
 		};
@@ -337,6 +347,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CLANG_USE_OPTIMIZATION_PROFILE = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
@@ -369,6 +380,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CLANG_USE_OPTIMIZATION_PROFILE = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;

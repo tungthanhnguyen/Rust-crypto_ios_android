@@ -35,7 +35,7 @@ Setup
     path of the current version of Android NDK.
 
     ```sh
-    export ANDROID_NDK_HOME='/usr/local/opt/android-ndk/android-ndk-r21b/'
+    export ANDROID_NDK_HOME='/usr/local/opt/android-ndk/android-ndk-r21c/'
     ```
 
 3. Create the build information for NDK.
