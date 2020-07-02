@@ -5,52 +5,52 @@
 // except according to those terms.
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-extern {
-    pub fn rust_crypto_util_supports_aesni() -> u32;
+extern
+{
+	pub fn rust_crypto_util_supports_aesni() -> u32;
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub fn supports_aesni() -> bool {
-    unsafe {
-        rust_crypto_util_supports_aesni() != 0
-    }
+pub fn supports_aesni() -> bool
+{
+	// unsafe
+	// {
+	// 	rust_crypto_util_supports_aesni() != 0
+	// }
+	false
 }
 
-extern {
-    pub fn rust_crypto_util_fixed_time_eq_asm(
-            lhsp: *const u8,
-            rhsp: *const u8,
-            count: usize) -> u32;
-    pub fn rust_crypto_util_secure_memset(
-            dst: *mut u8,
-            val: u8,
-            count: usize);
+extern
+{
+	pub fn rust_crypto_util_fixed_time_eq_asm(lhsp: *const u8, rhsp: *const u8, count: usize) -> u32;
+	pub fn rust_crypto_util_secure_memset(dst: *mut u8, val: u8, count: usize);
 }
 
-pub fn secure_memset(dst: &mut [u8], val: u8) {
-    unsafe {
-        rust_crypto_util_secure_memset(
-            dst.as_mut_ptr(),
-            val,
-            dst.len() as usize);
-    }
+pub fn secure_memset(dst: &mut [u8], val: u8)
+{
+	unsafe
+	{
+		rust_crypto_util_secure_memset(dst.as_mut_ptr(), val, dst.len() as usize);
+	}
 }
 
 /// Compare two vectors using a fixed number of operations. If the two vectors are not of equal
 /// length, the function returns false immediately.
-pub fn fixed_time_eq(lhs: &[u8], rhs: &[u8]) -> bool {
-    if lhs.len() != rhs.len() {
-        false
-    } else {
-        // let count = lhs.len() as libc::size_t;
-        // unsafe {
-        //     let lhsp = lhs.get_unchecked(0);
-        //     let rhsp = rhs.get_unchecked(0);
-        //     rust_crypto_util_fixed_time_eq_asm(lhsp, rhsp, count) == 0
-        // }
-        // Replace with...
-        lhs.iter().zip(rhs).all(|(a, b)| a == b)
-    }
+pub fn fixed_time_eq(lhs: &[u8], rhs: &[u8]) -> bool
+{
+	if lhs.len() != rhs.len() { false }
+	else
+	{
+		// let count = lhs.len() as libc::size_t;
+		// unsafe
+		// {
+		// 	let lhsp = lhs.get_unchecked(0);
+		// 	let rhsp = rhs.get_unchecked(0);
+		// 	rust_crypto_util_fixed_time_eq_asm(lhsp, rhsp, count) == 0
+		// }
+		// Replace with...
+		lhs.iter().zip(rhs).all(|(a, b)| a == b)
+	}
 }
 
 #[cfg(test)]

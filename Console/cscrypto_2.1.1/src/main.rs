@@ -718,8 +718,9 @@ fn do_encrypt(pub_file_path: &str, in_file_path: &str, out_file_path: &str, enc_
 					return
 				}
 			};
-			let magic_num: u8 = enc_dat[0].gcd(&enc_dat[1]) + 2; // 2 is indicator of high encrypt level
-			enc_dat.push(magic_num);
+			let mut magic_num: u16 = enc_dat[0] as u16;
+			magic_num = magic_num.gcd(&(enc_dat[1] as u16)) + 2; // 2 is indicator of high encrypt level
+			enc_dat.extend_from_slice(&magic_num.to_le_bytes());
 
 			let mut buf_compressed2 = Rebox::from(vec![0u8; BrotliEncoderMaxCompressedSizeMulti(enc_dat.len(), num_threads)]);
 			let _ = brotli_compress_multi_nostd(enc_dat, buf_compressed2.slice_mut(), brotli_compression_level, num_threads, false);

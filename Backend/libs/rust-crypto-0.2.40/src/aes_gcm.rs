@@ -11,76 +11,85 @@ use crate::symmetriccipher::SynchronousStreamCipher;
 use crate::ghash::{Ghash};
 use crate::util::fixed_time_eq;
 
-pub struct AesGcm<'a> {
-    cipher: Box<dyn SynchronousStreamCipher + 'a>,
-    mac: Ghash,
-    finished: bool,
-    end_tag: [u8; 16]
+pub struct AesGcm<'a>
+{
+	cipher: Box<dyn SynchronousStreamCipher + 'a>,
+	mac: Ghash,
+	finished: bool,
+	end_tag: [u8; 16]
 }
 
-impl<'a> AesGcm<'a> {
-    pub fn new (key_size: KeySize, key: &[u8], nonce: &[u8], aad: &[u8]) -> AesGcm<'a> {
-        assert!(key.len() == 16 || key.len() == 24 || key.len() == 32);
-        assert!(nonce.len() == 12);
+impl<'a> AesGcm<'a>
+{
+	pub fn new (key_size: KeySize, key: &[u8], nonce: &[u8], aad: &[u8]) -> AesGcm<'a>
+	{
+		assert!(key.len() == 16 || key.len() == 24 || key.len() == 32 || key.len() == 64 || key.len() == 128);
+		assert!(nonce.len() == 12);
 
-        // GCM technically differs from CTR mode in how role overs are handled
-        // GCM only touches the right most 4 bytes while CTR roles all 16 over
-        // when the iv is only 96 bits (12 bytes) then 4 bytes of zeros are
-        // appended to it meaning you have to encrypt 2^37 bytes (256 gigabytes)
-        // of data before a difference crops up.
-        // The GCM handles nonces of other lengths by hashing them once with ghash
-        // this would cause the roleover behavior to potentially be triggered much
-        // earlier preventing the use of generic CTR mode.
+		// GCM technically differs from CTR mode in how role overs are handled
+		// GCM only touches the right most 4 bytes while CTR roles all 16 over
+		// when the iv is only 96 bits (12 bytes) then 4 bytes of zeros are
+		// appended to it meaning you have to encrypt 2^37 bytes (256 gigabytes)
+		// of data before a difference crops up.
+		// The GCM handles nonces of other lengths by hashing them once with ghash
+		// this would cause the roleover behavior to potentially be triggered much
+		// earlier preventing the use of generic CTR mode.
 
-        let mut iv = [0u8; 16];
-        copy_memory(nonce, &mut iv);
-        iv[15] = 1u8;
-        let mut cipher = ctr(key_size,key,&iv);
-        let temp_block = [0u8; 16];
-        let mut final_block = [0u8; 16];
-        cipher.process(&temp_block, &mut final_block);
-        let mut hash_key =  [0u8; 16];
-        let mut encryptor = ctr(key_size,key,&temp_block);
-        encryptor.process(&temp_block, &mut hash_key);
-        AesGcm {
-            cipher: cipher,
-            mac:  Ghash::new(&hash_key).input_a(aad),
-            finished: false,
-            end_tag: final_block
-        }
-    }
-
+		let mut iv = [0u8; 16];
+		copy_memory(nonce, &mut iv);
+		iv[15] = 1u8;
+		let mut cipher = ctr(key_size,key,&iv);
+		let temp_block = [0u8; 16];
+		let mut final_block = [0u8; 16];
+		cipher.process(&temp_block, &mut final_block);
+		let mut hash_key = [0u8; 16];
+		let mut encryptor = ctr(key_size,key,&temp_block);
+		encryptor.process(&temp_block, &mut hash_key);
+		AesGcm
+		{
+			cipher: cipher,
+			mac: Ghash::new(&hash_key).input_a(aad),
+			finished: false,
+			end_tag: final_block
+		}
+	}
 }
 
-impl<'a> AeadEncryptor for AesGcm<'static> {
-    fn encrypt(&mut self, input: &[u8], output: &mut [u8], tag: &mut [u8]) {
-        assert!(input.len() == output.len());
-        assert!(!self.finished);
-        self.cipher.process(input, output);
-        let result = self.mac.input_c(output).result();
-        self.finished = true;
-        for i in 0..16 {
-            tag[i] = result[i] ^ self.end_tag[i];
-        }
-    }
+impl<'a> AeadEncryptor for AesGcm<'static>
+{
+	fn encrypt(&mut self, input: &[u8], output: &mut [u8], tag: &mut [u8])
+	{
+		assert!(input.len() == output.len());
+		assert!(!self.finished);
+		self.cipher.process(input, output);
+		let result = self.mac.input_c(output).result();
+		self.finished = true;
+		for i in 0..16
+		{
+			tag[i] = result[i] ^ self.end_tag[i];
+		}
+	}
 }
 
-impl<'a> AeadDecryptor for AesGcm<'static> {
-    fn decrypt(&mut self, input: &[u8], output: &mut [u8], tag: &[u8])  -> bool {
-        assert!(input.len() == output.len());
-        assert!(!self.finished);
-        self.finished = true;
-        let mut calc_tag = self.mac.input_c(input).result();
-        for i in 0..16 {
-            calc_tag[i] ^= self.end_tag[i];
-        }
-        if fixed_time_eq(&calc_tag, tag) {
-            self.cipher.process(input, output);
-            true
-        } else {
-            false
-        }
-    }
+impl<'a> AeadDecryptor for AesGcm<'static>
+{
+	fn decrypt(&mut self, input: &[u8], output: &mut [u8], tag: &[u8]) -> bool
+	{
+		assert!(input.len() == output.len());
+		assert!(!self.finished);
+		self.finished = true;
+		let mut calc_tag = self.mac.input_c(input).result();
+		for i in 0..16
+		{
+			calc_tag[i] ^= self.end_tag[i];
+		}
+		if fixed_time_eq(&calc_tag, tag)
+		{
+			self.cipher.process(input, output);
+			true
+		}
+		else { false }
+	}
 }
 
 #[cfg(test)]
