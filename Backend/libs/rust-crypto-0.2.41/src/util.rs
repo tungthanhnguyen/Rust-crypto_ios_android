@@ -13,11 +13,11 @@ extern
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn supports_aesni() -> bool
 {
-	// unsafe
-	// {
-	// 	rust_crypto_util_supports_aesni() != 0
-	// }
-	false
+	unsafe
+	{
+		rust_crypto_util_supports_aesni() != 0
+	}
+	// false
 }
 
 extern

@@ -94,6 +94,9 @@ impl BlockEncryptor for AesNiEncryptor
 	fn encrypt_block(&self, input: &[u8], output: &mut [u8])
 	{
 		encrypt_block_aesni(self.rounds, input, &self.round_keys[0..size(self.rounds)], output);
+		// println!("/* AES-NI encrypt_block */ input = {:?}", input);
+		// println!("/* AES-NI encrypt_block */ output = {:?}", output);
+		// println!("\n");
 	}
 }
 
@@ -235,8 +238,8 @@ fn setup_working_key_aesni_1024(key: &[u8], key_type: KeyType, round_key: &mut [
 		{
 			KeyType::Decryption =>
 			{
-				// range of rounds keys from #1 to #21; skip the first and last key
-				for i in 1..22
+				// range of rounds keys from #1 to #37; skip the first and last key
+				for i in 1..38
 				{
 					rust_crypto_aesni_aesimc(round_key.get_unchecked_mut(16 * i));
 				}

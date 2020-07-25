@@ -34,7 +34,8 @@ use core::ops;
 
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use crypto::aes;
+use crypto::{symmetriccipher, buffer, aes, blockmodes};
+use crypto::buffer::{ReadBuffer, WriteBuffer, BufferResult};
 use crypto::aes::KeySize;
 use crypto::curve25519::{curve25519_base};
 
@@ -295,8 +296,8 @@ impl brotli::enc::BrotliAlloc for HeapAllocator
 fn main()
 {
 	let matches = App::new("cscrypto")
-		.version("2.1.1")
-		.author("© 2017-2019 by Tung Thanh Nguyen. <phonethanhtung@gmail.com>")
+		.version("2.1.2")
+		.author("© 2017-2020 by Tung Thanh Nguyen. <phonethanhtung@gmail.com>")
 		.about("Public encrypt file")
 		.subcommand(SubCommand::with_name("genkey")
 			.about("Generate public key and private key")
@@ -658,7 +659,7 @@ fn do_encrypt(pub_file_path: &str, in_file_path: &str, out_file_path: &str, enc_
 			let mut gen = thread_rng();
 			let mut key = vec![0u8; 128];
 			gen.fill(key.as_mut_slice());
-			let mut iv = vec![0u8; 128];
+			let mut iv = vec![0u8; 16];
 			gen.fill(iv.as_mut_slice());
 
 			// End Generate random key
@@ -671,9 +672,18 @@ fn do_encrypt(pub_file_path: &str, in_file_path: &str, out_file_path: &str, enc_
 			// println!("\nlength of buf_compressed = {}\n", buf_compressed.len());
 			// println!("\nAES key = {:?}\n\n    iv = {:?}\n", key, iv);
 
-			let mut cipher = aes::ctr(KeySize::KeySize1024, key.as_slice(), iv.as_slice());
-			let mut enc_dat = vec![0u8; buf_compressed.len()];
-			cipher.process(buf_compressed.slice(), enc_dat.as_mut_slice());
+			// let mut cipher = aes::ctr(KeySize::KeySize512, key.as_slice(), iv.as_slice());
+			// let mut enc_dat = vec![0u8; buf_compressed.len()];
+			// cipher.process(buf_compressed.slice(), enc_dat.as_mut_slice());
+			let mut enc_dat = match aes_encrypt(KeySize::KeySize1024, buf_compressed.slice(), &key, &iv)
+			{
+				Ok(dat) => dat,
+				Err(_) =>
+				{
+					println!("Couldn't encrypt raw data");
+					return
+				}
+			};
 
 			key.append(&mut iv);
 			let mut enc_key: Vec<u8> = match encrypt_buf(&public_key, &key)
@@ -919,7 +929,6 @@ fn do_decrypt(pri_file_path: &str, in_file_path: &str, out_file_path: &str)
 	let encrypt_level_raw: [u8; 2] = [buf_decompressed.pop().unwrap(), buf_decompressed.pop().unwrap()];
 	let mut encrypt_level: u16 = u16::from_be_bytes(encrypt_level_raw);
 	encrypt_level = encrypt_level - (buf_decompressed[0].gcd(&buf_decompressed[1]) as u16);
-	// let encrypt_level: u8 = buf.pop().unwrap() - buf[0].gcd(&buf[1]);
 	// println!("encrypt_level = {}", encrypt_level);
 	// End Get encrypt level
 
@@ -932,9 +941,6 @@ fn do_decrypt(pri_file_path: &str, in_file_path: &str, out_file_path: &str)
 		enc_key_len = enc_key_len - (buf_decompressed[0].gcd(&buf_decompressed[1]) as usize);
 		let mut buf_len = buf_decompressed.len();
 		let enc_key = buf_decompressed.split_off(buf_len - enc_key_len);
-		// let enc_key_len: usize = (buf.pop().unwrap() - buf[0].gcd(&buf[1])) as usize;
-		// let mut buf_len = buf.len();
-		// let enc_key = buf.split_off(buf_len - enc_key_len);
 		let mut key: Vec<u8> = match decrypt_buf(&private_key, &enc_key[..])
 		{
 			Ok(k) => k,
@@ -945,13 +951,20 @@ fn do_decrypt(pri_file_path: &str, in_file_path: &str, out_file_path: &str)
 			}
 		};
 		buf_len = key.len();
-		let iv = key.split_off(buf_len - 128);
+		let iv = key.split_off(buf_len - 16);
 
-		let mut cipher = aes::ctr(KeySize::KeySize1024, key.as_slice(), iv.as_slice());
-		let mut dec_dat = vec![0u8; buf_decompressed.len()];
-		cipher.process(buf_decompressed.as_slice(), dec_dat.as_mut_slice());
-		// let mut dec_dat = vec![0u8; buf.len()];
-		// cipher.process(buf.as_slice(), dec_dat.as_mut_slice());
+		// let mut cipher = aes::ctr(KeySize::KeySize512, key.as_slice(), iv.as_slice());
+		// let mut dec_dat = vec![0u8; buf_decompressed.len()];
+		// cipher.process(buf_decompressed.as_slice(), dec_dat.as_mut_slice());
+		let dec_dat = match aes_decrypt(KeySize::KeySize1024, buf_decompressed.as_slice(), &key, &iv)
+		{
+			Ok(dat) => dat,
+			Err(_) =>
+			{
+				println!("Couldn't decrypt raw data");
+				return
+			}
+		};
 
 		// println!("AES key = {:?}\n\n    iv = {:?}\n", key, iv);
 		// println!("\nlength of dec_dat = {}\n", dec_dat.len());
@@ -978,6 +991,7 @@ fn do_decrypt(pri_file_path: &str, in_file_path: &str, out_file_path: &str)
 				}
 			}
 		}
+		// let buf_decompressed2 = dec_dat;
 
 		// println!("\ncounter = {}\n", counter);
 		// println!("\nLength of raw data = {}\n", buf_decompressed2.len());
@@ -1057,3 +1071,93 @@ fn brotli_compress_multi_nostd(input: Vec<u8>, output: &mut [u8], quality: i32, 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+// Encrypt a buffer with the given key and iv using
+// AES-(128,192,256,512,1024)/CBC/Pkcs encryption.
+fn aes_encrypt(key_size: KeySize, data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError>
+{
+	// Create an encryptor instance of the best performing
+	// type available for the platform.
+	let mut encryptor = aes::cbc_encryptor(key_size, key, iv, blockmodes::PkcsPadding);
+
+	// Each encryption operation encrypts some data from
+	// an input buffer into an output buffer. Those buffers
+	// must be instances of RefReaderBuffer and RefWriteBuffer
+	// (respectively) which keep track of how much data has been
+	// read from or written to them.
+	let mut final_result = Vec::<u8>::new();
+	let mut read_buffer = buffer::RefReadBuffer::new(data);
+	let mut buffer = [0; 4096];
+	let mut write_buffer = buffer::RefWriteBuffer::new(&mut buffer);
+
+	// Each encryption operation will "make progress". "Making progress"
+	// is a bit loosely defined, but basically, at the end of each operation
+	// either BufferUnderflow or BufferOverflow will be returned (unless
+	// there was an error). If the return value is BufferUnderflow, it means
+	// that the operation ended while wanting more input data. If the return
+	// value is BufferOverflow, it means that the operation ended because it
+	// needed more space to output data. As long as the next call to the encryption
+	// operation provides the space that was requested (either more input data
+	// or more output space), the operation is guaranteed to get closer to
+	// completing the full operation - ie: "make progress".
+	//
+	// Here, we pass the data to encrypt to the enryptor along with a fixed-size
+	// output buffer. The 'true' flag indicates that the end of the data that
+	// is to be encrypted is included in the input buffer (which is true, since
+	// the input data includes all the data to encrypt). After each call, we copy
+	// any output data to our result Vec. If we get a BufferOverflow, we keep
+	// going in the loop since it means that there is more work to do. We can
+	// complete as soon as we get a BufferUnderflow since the encryptor is telling
+	// us that it stopped processing data due to not having any more data in the
+	// input buffer.
+	loop
+	{
+		let result = encryptor.encrypt(&mut read_buffer, &mut write_buffer, true)?;
+
+		// "write_buffer.take_read_buffer().take_remaining()" means:
+		// from the writable buffer, create a new readable buffer which
+		// contains all data that has been written, and then access all
+		// of that data as a slice.
+		final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+
+		match result
+		{
+			BufferResult::BufferUnderflow => break,
+			BufferResult::BufferOverflow => { }
+		}
+	}
+
+	Ok(final_result)
+}
+
+// Decrypts a buffer with the given key and iv using
+// AES-(128,192,256,512,1024)/CBC/Pkcs decryption.
+//
+// This function is very similar to encrypt(), so, please reference
+// comments in that function. In non-example code, if desired, it is possible to
+// share much of the implementation using closures to hide the operation
+// being performed. However, such code would make this example less clear.
+fn aes_decrypt(key_size: KeySize, encrypted_data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError>
+{
+	let mut decryptor = aes::cbc_decryptor(key_size, key, iv, blockmodes::PkcsPadding);
+	// let mut decryptor = aes::ecb_decryptor(aes::KeySize::KeySize1024, key, blockmodes::PkcsPadding);
+
+	let mut final_result = Vec::<u8>::new();
+	let mut read_buffer = buffer::RefReadBuffer::new(encrypted_data);
+	let mut buffer = [0; 4096];
+	let mut write_buffer = buffer::RefWriteBuffer::new(&mut buffer);
+
+	loop
+	{
+		let result = decryptor.decrypt(&mut read_buffer, &mut write_buffer, true)?;
+		final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+
+		match result
+		{
+			BufferResult::BufferUnderflow => break,
+			BufferResult::BufferOverflow => { }
+		}
+	}
+
+	Ok(final_result)
+}

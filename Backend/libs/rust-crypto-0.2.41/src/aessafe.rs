@@ -286,19 +286,24 @@ macro_rules! define_aes_impl_x8(
 );
 
 macro_rules! define_aes_enc_x8(
-    (
-        $name:ident,
-        $rounds:expr
-    ) => (
-        impl BlockEncryptorX8 for $name {
-            fn block_size(&self) -> usize { 16 }
-            fn encrypt_block_x8(&self, input: &[u8], output: &mut [u8]) {
-                let bs = bit_slice_1x128_with_u32x4(input);
-                let bs2 = encrypt_core(&bs, &self.sk);
-                un_bit_slice_1x128_with_u32x4(bs2, output);
-            }
-        }
-    )
+	($name:ident, $rounds:expr)
+	=>
+	(
+		impl BlockEncryptorX8 for $name
+		{
+			fn block_size(&self) -> usize { 16 }
+
+			fn encrypt_block_x8(&self, input: &[u8], output: &mut [u8])
+			{
+				let bs = bit_slice_1x128_with_u32x4(input);
+				let bs2 = encrypt_core(&bs, &self.sk);
+				un_bit_slice_1x128_with_u32x4(bs2, output);
+				// println!("/* AES Safe encrypt_block_x8 */ input = {:?}", input);
+				// println!("/* AES Safe encrypt_block_x8 */ output = {:?}", output);
+				// println!("\n");
+			}
+		}
+	)
 );
 
 macro_rules! define_aes_dec_x8(
@@ -391,17 +396,28 @@ static RCON: [u32; 10] = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 
 // derived from the BouncyCastle AES implementation.
 fn create_round_keys(key: &[u8], key_type: KeyType, round_keys: &mut [[u32; 4]])
 {
-	// println!("create_round_keys : key.len() = {}, round_keys.len() = {}", key.len(), round_keys.len());
+	// let key_len = match key.len()
+	// {
+	// 	16  => 128,
+	// 	24  => 192,
+	// 	32  => 256,
+	// 	64  => 512,
+	// 	128 => 1024,
+	// 	_   => panic!("Not match AES key size.")
+	// };
+	// println!("/* AES SAFE {} */ : key = {:?}", key_len, key);
+	// println!("/* AES SAFE {} */ : round_keys = {:?}", key_len, round_keys);
+	// println!("/* AES SAFE {} */ : create_round_keys : key.len() = {}, round_keys.len() = {}", key_len, key.len(), round_keys.len());
 	let (key_words, rounds) = match key.len()
 	{
-		16  => (4,  10),
-		24  => (6,  12),
-		32  => (8,  14),
+		16  => ( 4, 10),
+		24  => ( 6, 12),
+		32  => ( 8, 14),
 		64  => (16, 22),
 		128 => (32, 38),
 		_   => panic!("Invalid AES key size.")
 	};
-	// println!("create_round_keys : key_words = {}, rounds = {}", key_words, rounds);
+	// println!("/* AES SAFE {} */ : create_round_keys : key_words = {}, rounds = {}", key_len, key_words, rounds);
 
 	// The key is copied directly into the first few round keys
 	let mut j = 0;
@@ -414,25 +430,41 @@ fn create_round_keys(key: &[u8], key_type: KeyType, round_keys: &mut [[u32; 4]])
 			((key[i + 3] as u32) << 24);
 		j += 1;
 	};
+	// println!("/* AES SAFE {} */ : round_keys = {:?}", key_len, round_keys);
 
 	// Calculate the rest of the round keys
+	let mut count = 0;
 	for i in key_words..(rounds + 1) * 4
 	{
+		count = count + 1;
 		let mut tmp = round_keys[(i - 1) / 4][(i - 1) % 4];
 		if (i % key_words) == 0
 		{
-			// println!("RCON[(i / key_words) - 1] = {}", RCON[(i / key_words) - 1]);
+			// println!("/* AES SAFE {} */ : ::::: i = {}", key_len, i);
+			// println!("/* AES SAFE {} */ : RCON[(i / key_words) - 1] = {}", key_len, RCON[(i / key_words) - 1]);
 			tmp = sub_word(tmp.rotate_right(8)) ^ RCON[(i / key_words) - 1];
 		}
 		else if (key_words == 8) && ((i % key_words) == 4)
 		{
-			// println!("(key_words == 8) && ((i % key_words) == 4)");
+			// println!("/* AES SAFE {} */ : sub_word(tmp) = {}", key_len, sub_word(tmp));
 			// This is only necessary for AES-256 keys
 			tmp = sub_word(tmp);
 		}
-		// println!("i = {}, round_keys[i / 4][i % 4] = round_keys[{}][{}]", i, i / 4, i % 4);
+		// println!("/* AES SAFE {} */ : i = {}, round_keys[i / 4][i % 4] = round_keys[{}][{}]", key_len, i, i / 4, i % 4);
 		round_keys[i / 4][i % 4] = round_keys[(i - key_words) / 4][(i - key_words) % 4] ^ tmp;
 	}
+	// println!("/* AES SAFE {} */ : ::::: count = {}", key_len, count);
+	// println!("/* AES SAFE {} */ : round_keys = {:?}", key_len, round_keys);
+	// let mut flat_round_keys: Vec<u8> = Vec::new();
+	// for i in 0..round_keys.len()
+	// {
+	// 	for j in 0..round_keys[i].len()
+	// 	{
+	// 		let bytes = transform_u32_to_array_of_u8(round_keys[i][j]);
+	// 		flat_round_keys.extend_from_slice(&bytes);
+	// 	}
+	// }
+	// println!("/* AES SAFE {} */ : flat round_keys = {:?}", key_len, flat_round_keys);
 
 	// Decryption round keys require extra processing
 	match key_type
@@ -450,6 +482,15 @@ fn create_round_keys(key: &[u8], key_type: KeyType, round_keys: &mut [[u32; 4]])
 		KeyType::Encryption => { }
 	}
 }
+
+/*fn transform_u32_to_array_of_u8(x: u32) -> [u8; 4]
+{
+	let b1: u8 = (x & 0xff) as u8;
+	let b2: u8 = ((x >> 8) & 0xff) as u8;
+	let b3: u8 = ((x >> 16) & 0xff) as u8;
+	let b4: u8 = ((x >> 24) & 0xff) as u8;
+	return [b1, b2, b3, b4]
+}*/
 
 // This trait defines all of the operations needed for a type to be processed as part of an AES
 // encryption or decryption operation.

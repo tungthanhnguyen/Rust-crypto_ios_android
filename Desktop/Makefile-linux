@@ -1,4 +1,4 @@
-CXX = clang++ -std=c++17
+CXX = g++ -std=gnu++2a
 
 OBJS_OUTPUT_DIR = ./Objs
 APP_OUTPUT_DIR = ./Bin

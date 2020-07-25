@@ -1,16 +1,27 @@
 [package]
 name = "cscrypto"
-version = "2.1.1"
+version = "2.1.2"
 authors = ["tungthanhnguyen"]
 edition = "2018"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = false
+debug-assertions = false
+codegen-units = 16
+panic = 'unwind'
+incremental = false
+overflow-checks = false
 
 [dependencies]
 alloc-no-stdlib = "2.0.1"
 brotli = "3.3.0"
 clap = "~2.33"
-num = "0.2.1"
+num = "0.3.0"
 num_cpus = "1.13.0"
 rand = { version = "0.7.3", features = ["wasm-bindgen"] }
-rust-crypto = { version = "0.2.40", path = "../../Backend/libs/rust-crypto-0.2.40" }
+rust-crypto = { version = "0.2.41", path = "../../Backend/libs/rust-crypto-0.2.41" }
 rustc-serialize = { version = "0.3.24", path = "../../Backend/libs/rustc-serialize-0.3.24" }
 rust_crypto = { version = "0.1.3", path = "../../Backend/rust_crypto" }

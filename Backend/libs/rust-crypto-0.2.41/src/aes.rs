@@ -8,8 +8,7 @@
 use crate::aesni;
 
 use crate::aessafe;
-use crate::blockmodes::{PaddingProcessor, EcbEncryptor, EcbDecryptor, CbcEncryptor, CbcDecryptor, CtrMode,
-    CtrModeX8};
+use crate::blockmodes::{PaddingProcessor, EcbEncryptor, EcbDecryptor, CbcEncryptor, CbcDecryptor, CtrMode, CtrModeX8};
 use crate::symmetriccipher::{Encryptor, Decryptor, SynchronousStreamCipher};
 use crate::util;
 
@@ -343,6 +342,12 @@ pub fn ctr(key_size: KeySize, key: &[u8], iv: &[u8]) -> Box<dyn SynchronousStrea
 {
 	get_ctr(key_size, key, iv)
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 #[cfg(test)]
 mod test {

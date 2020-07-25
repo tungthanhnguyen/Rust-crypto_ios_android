@@ -1,4 +1,4 @@
-CXX = clang++ -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mmacosx-version-min=10.14 -stdlib=libc++
+CXX = clang++ -std=c++2a -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mmacosx-version-min=10.14 -stdlib=libc++
 
 OBJS_OUTPUT_DIR = ./Objs
 APP_OUTPUT_DIR = ./Bin
@@ -11,7 +11,7 @@ RUST_TARGET = x86_64-apple-darwin
 CORELIB_DIR = ../Backend/$(LIB_RUST_NAME)
 
 WX_RELEASE = 3.1
-WX_VERSION = $(WX_RELEASE).4
+WX_VERSION = $(WX_RELEASE).5
 
 all: CreateOutputDirs MakeApp BuildAppPack
 
