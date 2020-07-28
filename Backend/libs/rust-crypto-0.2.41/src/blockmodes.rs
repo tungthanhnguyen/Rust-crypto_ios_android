@@ -18,6 +18,7 @@ use crate::cryptoutil::{self, symm_enc_or_dec};
 use crate::symmetriccipher::{BlockEncryptor, BlockEncryptorX8, Encryptor, BlockDecryptor, Decryptor,
 	SynchronousStreamCipher, SymmetricCipherError};
 use crate::symmetriccipher::SymmetricCipherError::{InvalidPadding, InvalidLength};
+use crate::util::OwnedIv;
 
 /// The BlockProcessor trait is used to implement modes that require processing complete blocks of
 /// data. The methods of this trait are called by the BlockEngine which is in charge of properly
@@ -160,74 +161,43 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 			(&vec[..at], &vec[at..])
 		}
 
+		let has_enc: bool = self.in_hist.len() > 0;
+		let mut iv: [u8; 16] = [0; 16];
+		if has_enc { iv.copy_from_slice(&self.in_hist.as_slice()) } else { iv.copy_from_slice(&self.out_hist.as_slice()) }
+		let mut owned_iv = OwnedIv::new(&iv);
+
 		// First block processing. We have to retrieve the history information from self.in_hist and
 		// self.out_hist.
 		if !has_next(input, output, self.block_size)
 		{
-			if input.is_empty()
-			{
-				return BlockEngineState::FastMode;
-			}
-			else
-			{
-				return BlockEngineState::NeedInput;
-			}
+			if input.is_empty() { return BlockEngineState::FastMode }
+			else { return BlockEngineState::NeedInput }
 		}
 		else
 		{
 			let next_in = input.take_next(self.block_size);
 			let next_out = output.take_next(self.block_size);
-			self.processor.process_block(&self.in_hist[..], &self.out_hist[..], next_in, next_out);
+			iv = *owned_iv.next_iv();
+			self.processor.process_block(if has_enc { &iv } else { &self.in_hist[..] },
+			                             if has_enc { &self.out_hist[..] } else { &iv },
+			                             next_in, next_out);
 		}
-		// else
-		// {
-		// 	loop
-		// 	{
-		// 		let next_in = input.take_next(self.block_size);
-		// 		let next_out = output.take_next(self.block_size);
-		// 		self.processor.process_block(&self.in_hist[..], &self.out_hist[..], next_in, next_out);
-		// 		if !has_next(input, output, self.block_size)
-		// 		{
-		// 			break
-		// 		}
-		// 	}
-		// }
-
-		// println!("fast_mode !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-		// println!("self.block_size = {}", self.block_size);
 
 		// Process all remaing blocks. We can pull the history out of the buffers without having to
 		// do any copies
 		let next_in_size = self.in_hist.len() + self.block_size;
 		let next_out_size = self.out_hist.len() + self.block_size;
-		// println!("self.in_hist.len() = {}", self.in_hist.len());
-		// println!("self.out_hist.len() = {}", self.out_hist.len());
-		// println!("next_in_size = {}", next_in_size);
-		// println!("next_out_size = {}", next_out_size);
 		while has_next(input, output, self.block_size)
 		{
 			input.rewind(self.in_hist.len());
 			let (in_hist, next_in) = split_at(input.take_next(next_in_size), self.in_hist.len());
-			// println!("----------------------------------Begin---------------------------------------------");
-			// println!("in_hist = {:?}", in_hist);
-			// println!("in_hist.len() = {}", in_hist.len());
-			// println!("next_in = {:?}", next_in);
-			// println!("next_in.len() = {}", next_in.len());
-			// println!("~~~~~~~~~~~~~~~~~~~~~~~~~~");
 			output.rewind(self.out_hist.len());
 			let tmp = output.take_next(next_out_size);
-			// println!("output.take_next = {:?}", tmp);
-			// println!("output.take_next.len() = {}", tmp.len());
-			// println!("~~~~~~~~~~~~~~~~~~~~~~~~~~");
 			let (out_hist, next_out) = tmp.split_at_mut(self.out_hist.len());
-			// println!("out_hist = {:?}", out_hist);
-			// println!("out_hist.len() = {}", out_hist.len());
-			// println!("next_out = {:?}", next_out);
-			// println!("next_out.len() = {}", next_out.len());
-			// println!("~~~~~~~~~~~~~~~~~~~~~~~~~~");
-			self.processor.process_block(in_hist, out_hist, next_in, next_out);
-			// println!("-----------------------------------End----------------------------------------------");
-			// println!("\n");
+			iv = *owned_iv.next_iv();
+			self.processor.process_block(if has_enc { &iv } else { &self.in_hist[..] },
+			                             if has_enc { &self.out_hist[..] } else { &iv },
+			                             next_in, next_out);
 		}
 
 		// Save the history and then transition to the next state
@@ -370,21 +340,15 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 							process_scratch(self);
 							if self.padding.strip_output(self.out_read_scratch.as_mut().unwrap())
 							{
-								self.state = BlockEngineState::Finished;
+								self.state = BlockEngineState::Finished
 							}
-							else
-							{
-								self.state = BlockEngineState::Error(InvalidPadding);
-							}
+							else { self.state = BlockEngineState::Error(InvalidPadding) }
 						}
 						else if self.in_scratch.is_empty()
 						{
-							self.state = BlockEngineState::Finished;
+							self.state = BlockEngineState::Finished
 						}
-						else
-						{
-							self.state = BlockEngineState::Error(InvalidLength);
-						}
+						else { self.state = BlockEngineState::Error(InvalidLength) }
 					}
 					else
 					{
@@ -392,23 +356,17 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 						self.padding.pad_input(&mut self.in_scratch);
 						if self.in_scratch.is_full()
 						{
-							self.state = BlockEngineState::LastInput2;
+							self.state = BlockEngineState::LastInput2
 						}
 						else if self.in_scratch.is_empty()
 						{
 							if self.padding.strip_output(self.out_read_scratch.as_mut().unwrap())
 							{
-								self.state = BlockEngineState::Finished;
+								self.state = BlockEngineState::Finished
 							}
-							else
-							{
-								self.state = BlockEngineState::Error(InvalidPadding);
-							}
+							else { self.state = BlockEngineState::Error(InvalidPadding) }
 						}
-						else
-						{
-							self.state = BlockEngineState::Error(InvalidLength);
-						}
+						else { self.state = BlockEngineState::Error(InvalidLength) }
 					}
 				}
 
@@ -425,17 +383,14 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 						process_scratch(self);
 						if self.padding.strip_output(self.out_read_scratch.as_mut().unwrap())
 						{
-							self.state = BlockEngineState::Finished;
+							self.state = BlockEngineState::Finished
 						}
-						else
-						{
-							self.state = BlockEngineState::Error(InvalidPadding);
-						}
+						else { self.state = BlockEngineState::Error(InvalidPadding) }
 					}
 					else
 					{
 						self.out_read_scratch = Some(rout);
-						return Ok(BufferOverflow);
+						return Ok(BufferOverflow)
 					}
 				}
 
@@ -448,24 +403,15 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 						Some(ref mut rout) =>
 						{
 							rout.push_to(output);
-							if rout.is_empty()
-							{
-								return Ok(BufferUnderflow);
-							}
-							else
-							{
-								return Ok(BufferOverflow);
-							}
+							if rout.is_empty() { return Ok(BufferUnderflow) }
+							else { return Ok(BufferOverflow) }
 						}
-						None => { return Ok(BufferUnderflow); }
+						None => { return Ok(BufferUnderflow) }
 					}
 				}
 
 				// The Error state is used to store error information.
-				BlockEngineState::Error(err) =>
-				{
-					return Err(err);
-				}
+				BlockEngineState::Error(err) => { return Err(err) }
 			}
 		}
 	}
@@ -478,19 +424,16 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 		{
 			let ors = self.out_read_scratch.take().unwrap();
 			let ows = ors.into_write_buffer();
-			self.out_write_scratch = Some(ows);
+			self.out_write_scratch = Some(ows)
 		}
-		else
-		{
-			self.out_write_scratch.as_mut().unwrap().reset();
-		}
+		else { self.out_write_scratch.as_mut().unwrap().reset() }
 	}
 
 	fn reset_with_history(&mut self, in_hist: &[u8], out_hist: &[u8])
 	{
 		self.reset();
 		cryptoutil::copy_memory(in_hist, &mut self.in_hist);
-		cryptoutil::copy_memory(out_hist, &mut self.out_hist);
+		cryptoutil::copy_memory(out_hist, &mut self.out_hist)
 	}
 }
 
@@ -523,7 +466,7 @@ impl PaddingProcessor for PkcsPadding
 		assert!(rem != 0 && rem <= 255);
 		for v in input_buffer.take_remaining().iter_mut()
 		{
-			*v = rem as u8;
+			*v = rem as u8
 		}
 	}
 
@@ -536,10 +479,7 @@ impl PaddingProcessor for PkcsPadding
 			last_byte = *data.last().unwrap();
 			for &x in data.iter().rev().take(last_byte as usize)
 			{
-				if x != last_byte
-				{
-					return false;
-				}
+				if x != last_byte { return false }
 			}
 		}
 
@@ -561,7 +501,7 @@ impl <X: PaddingProcessor> EncPadding<X>
 
 impl <X: PaddingProcessor> PaddingProcessor for EncPadding<X>
 {
-	fn pad_input<W: WriteBuffer>(&mut self, a: &mut W) { self.padding.pad_input(a); }
+	fn pad_input<W: WriteBuffer>(&mut self, a: &mut W) { self.padding.pad_input(a) }
 	fn strip_output<R: ReadBuffer>(&mut self, _: &mut R) -> bool { true }
 }
 
@@ -591,7 +531,7 @@ impl <T: BlockEncryptor> BlockProcessor for EcbEncryptorProcessor<T>
 {
 	fn process_block(&mut self, _: &[u8], _: &[u8], input: &[u8], output: &mut [u8])
 	{
-		self.algo.encrypt_block(input, output);
+		self.algo.encrypt_block(input, output)
 	}
 }
 
@@ -634,7 +574,7 @@ impl <T: BlockDecryptor> BlockProcessor for EcbDecryptorProcessor<T>
 {
 	fn process_block(&mut self, _: &[u8], _: &[u8], input: &[u8], output: &mut [u8])
 	{
-		self.algo.decrypt_block(input, output);
+		self.algo.decrypt_block(input, output)
 	}
 }
 
@@ -680,11 +620,9 @@ impl <T: BlockEncryptor> BlockProcessor for CbcEncryptorProcessor<T>
 	{
 		for ((&x, &y), o) in input.iter().zip(out_hist.iter()).zip(self.temp.iter_mut())
 		{
-			*o = x ^ y;
+			*o = x ^ y
 		}
 		self.algo.encrypt_block(&self.temp[..], output);
-		// println!("input = {:?}", input);
-		// println!("output = {:?}", output);
 	}
 }
 
@@ -738,7 +676,7 @@ impl <T: BlockDecryptor> BlockProcessor for CbcDecryptorProcessor<T>
 		self.algo.decrypt_block(input, &mut self.temp);
 		for ((&x, &y), o) in self.temp.iter().zip(in_hist.iter()).zip(output.iter_mut())
 		{
-			*o = x ^ y;
+			*o = x ^ y
 		}
 	}
 }
@@ -786,10 +724,7 @@ fn add_ctr(ctr: &mut [u8], mut ammount: u8)
 	{
 		let prev = *i;
 		*i = i.wrapping_add(ammount);
-		if *i >= prev
-		{
-			break;
-		}
+		if *i >= prev { break }
 		ammount = 1;
 	}
 }
@@ -824,33 +759,33 @@ impl <A: BlockEncryptor> CtrMode<A>
 
 	fn process(&mut self, input: &[u8], output: &mut [u8])
 	{
-		// println!("Ctr Mode (for AES-NI) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-		// println!("/* process */ input = {:?}\n\n", input);
 		assert!(input.len() == output.len());
+
+		let mut iv: [u8; 16] = [0; 16];
+		iv.copy_from_slice(&self.ctr.as_slice());
+		let mut owned_iv = OwnedIv::new(&iv);
+
 		let len = input.len();
 		let mut i = 0;
 		while i < len
 		{
-			// println!("self.bytes.is_empty() = {}", self.bytes.is_empty());
-			// println!("self.bytes.is_full() = {}", self.bytes.is_full());
 			if self.bytes.is_empty()
 			{
+				iv = *owned_iv.next_iv();
 				let mut wb = self.bytes.borrow_write_buffer();
-				self.algo.encrypt_block(&self.ctr[..], wb.take_remaining());
-				add_ctr(&mut self.ctr, 1);
+				self.algo.encrypt_block(&iv, wb.take_remaining());
+				add_ctr(&mut iv, 1)
 			}
-			// println!("Hmm......................................");
 			let count = cmp::min(self.bytes.remaining(), len - i);
 			let bytes_it = self.bytes.take_next(count).iter();
 			let in_it = input[i..].iter();
 			let out_it = output[i..].iter_mut();
 			for ((&x, &y), o) in bytes_it.zip(in_it).zip(out_it)
 			{
-				*o = x ^ y;
+				*o = x ^ y
 			}
 			i += count;
 		}
-		// println!("/* process */ output = {:?}\n\n", output);
 	}
 }
 
@@ -888,11 +823,10 @@ pub struct CtrModeX8<A>
 
 fn construct_ctr_x8(in_ctr: &[u8], out_ctr_x8: &mut [u8])
 {
-	// println!("in_ctr.len() = {}, out_ctr_x8.len() = {}", in_ctr.len(), out_ctr_x8.len());
 	for (i, ctr_i) in out_ctr_x8.chunks_mut(in_ctr.len()).enumerate()
 	{
 		cryptoutil::copy_memory(&in_ctr[0..ctr_i.len()], ctr_i);
-		add_ctr(ctr_i, i as u8);
+		add_ctr(ctr_i, i as u8)
 	}
 }
 
@@ -921,9 +855,14 @@ impl <A: BlockEncryptorX8> CtrModeX8<A>
 	fn process(&mut self, input: &[u8], output: &mut [u8])
 	{
 		// println!("Ctr Mode X8 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-		// println!("input = {:?}\n\n", input);
+
 		// TODO - Can some of this be combined with regular CtrMode?
 		assert!(input.len() == output.len());
+
+		let mut iv: [u8; 16] = [0; 16];
+		for i in 0..16 { iv[i] = self.ctr_x8[i] }
+		let mut owned_iv = OwnedIv::new(&iv);
+
 		let len = input.len();
 		let mut i = 0;
 		while i < len
@@ -931,6 +870,8 @@ impl <A: BlockEncryptorX8> CtrModeX8<A>
 			if self.bytes.is_empty()
 			{
 				let mut wb = self.bytes.borrow_write_buffer();
+				iv = *owned_iv.next_iv();
+				construct_ctr_x8(&iv, &mut self.ctr_x8);
 				self.algo.encrypt_block_x8(&self.ctr_x8[..], wb.take_remaining());
 				for ctr_i in &mut self.ctr_x8.chunks_mut(self.algo.block_size())
 				{
