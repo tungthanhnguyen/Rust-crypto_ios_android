@@ -190,10 +190,10 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 		while has_next(input, output, self.block_size)
 		{
 			input.rewind(self.in_hist.len());
-			let (in_hist, next_in) = split_at(input.take_next(next_in_size), self.in_hist.len());
+			let (_in_hist, next_in) = split_at(input.take_next(next_in_size), self.in_hist.len());
 			output.rewind(self.out_hist.len());
 			let tmp = output.take_next(next_out_size);
-			let (out_hist, next_out) = tmp.split_at_mut(self.out_hist.len());
+			let (_out_hist, next_out) = tmp.split_at_mut(self.out_hist.len());
 			iv = *owned_iv.next_iv();
 			self.processor.process_block(if has_enc { &iv } else { &self.in_hist[..] },
 			                             if has_enc { &self.out_hist[..] } else { &iv },

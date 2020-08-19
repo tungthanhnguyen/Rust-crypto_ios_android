@@ -6,11 +6,6 @@
 	#include <wx/wx.h>
 #endif
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-	#include <wx/wx.h>
-#endif
-
 class CCryptoDemoApp : public wxApp
 {
 public:

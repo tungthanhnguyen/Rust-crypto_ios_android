@@ -9,7 +9,7 @@ required for iOS development.
 * ✓ Rust 1.45.0
 * ✓ Android 7.1 – 10.0+ (API 25 – 30)
 * ✓ Swift 5.2
-* ✓ iOS 11.4 – 13.5
+* ✓ iOS 11.4 – 13.6
 
 *Note: The purpose of this project is not to create a pure Rust app, but rather
 use Rust as a shared native component between the mobile platforms.*
