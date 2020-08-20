@@ -6,7 +6,7 @@ Rust-crypto_ios_android (was supported for arm64)
 Example project for building a library for iOS + Android in Rust. macOS is
 required for iOS development.
 
-* ✓ Rust 1.45.0
+* ✓ Rust 1.45.2
 * ✓ Android 7.1 – 10.0+ (API 25 – 30)
 * ✓ Swift 5.2
 * ✓ iOS 11.4 – 13.6

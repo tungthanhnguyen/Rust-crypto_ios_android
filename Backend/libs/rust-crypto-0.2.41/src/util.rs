@@ -112,8 +112,8 @@ impl OwnedIv
 		if self.rev == false { tmp = u128::from_le_bytes(self.iv) }
 		else { tmp = u128::from_be_bytes(self.iv) }
 
-		if self.mm { if tmp == u128::MAX { tmp = self.do_magic() } }
-		else { if tmp == u128::MIN { tmp = self.do_magic() } }
+		if self.mm { if tmp == u128::MAX - 1 { tmp = self.do_magic() } }
+		else { if tmp == u128::MIN + 1 { tmp = self.do_magic() } }
 
 		if self.mm { tmp += 1 }
 		else { tmp -= 1 }
