@@ -94,9 +94,6 @@ impl BlockEncryptor for AesNiEncryptor
 	fn encrypt_block(&self, input: &[u8], output: &mut [u8])
 	{
 		encrypt_block_aesni(self.rounds, input, &self.round_keys[0..size(self.rounds)], output);
-		// println!("/* AES-NI encrypt_block */ input = {:?}", input);
-		// println!("/* AES-NI encrypt_block */ output = {:?}", output);
-		// println!("\n");
 	}
 }
 

@@ -40,7 +40,14 @@ fn main()
 			}
 			else
 			{
-				cfg.compiler(Path::new("cc"));
+				if target.contains("android")
+				{
+					if target.contains("aarch64") { cfg.compiler(Path::new("aarch64-linux-android-clang")); }
+					else if target.contains("arm") { cfg.compiler(Path::new("arm-linux-androideabi-clang")); }
+					else if target.contains("i686") { cfg.compiler(Path::new("i686-linux-android-clang")); }
+					else if target.contains("x86_64") { cfg.compiler(Path::new("x86_64-linux-android-clang")); }
+				}
+				else { cfg.compiler(Path::new("cc")); }
 			}
 		}
 		cfg.compile("lib_rust_crypto_helpers.a");
