@@ -60,8 +60,8 @@ pub struct OwnedIv
 	base_iv: [u8; 16],
 	iv: [u8; 16],
 	pos: usize,
+	pp: usize, // pinned pos
 	rev: bool, // ge or le bytes
-	re: bool, // round enough
 	mm: bool // min or max
 }
 
@@ -73,7 +73,10 @@ impl OwnedIv
 		let mut tmp_iv: [u8; 16] = [0; 16];
 		tmp_base_iv.clone_from_slice(iv);
 		tmp_iv.clone_from_slice(iv);
-		OwnedIv { base_iv: tmp_base_iv, iv: tmp_iv, pos: 8, rev: false, re: false, mm: true }
+		let mut sum: usize = 0;
+		for item in iv.iter() { sum += *item as usize }
+		let pp: usize = sum % 9;
+		OwnedIv { base_iv: tmp_base_iv, iv: tmp_iv, pos: pp, pp: pp, rev: false, mm: true }
 	}
 
 	fn do_magic(&mut self) -> u64
@@ -88,31 +91,27 @@ impl OwnedIv
 		self.iv[self.pos + 6] = self.base_iv[self.pos + 6];
 		self.iv[self.pos + 7] = self.base_iv[self.pos + 7];
 
-		if !self.rev
+		if self.rev == false
 		{
-			if self.pos > 0 { self.pos -= 1 }
-			else { self.rev = !self.rev }
+			if self.pos > 0
+			{
+				self.pos -= 1;
+				if self.pos == self.pp
+				{
+					if self.mm == false
+					{
+						self.base_iv.reverse();
+						self.iv.reverse();
+					}
+					self.mm = !self.mm
+				}
+			}
+			else { self.rev = true }
 		}
 		else
 		{
 			if self.pos < 8 { self.pos += 1 }
-			else
-			{
-				if !self.re
-				{
-					self.re = !self.re;
-					self.rev = !self.rev;
-					self.mm = !self.mm
-				}
-				else
-				{
-					self.base_iv.reverse();
-					self.iv.reverse();
-					self.rev = !self.rev;
-					self.re = false;
-					self.mm = !self.mm
-				}
-			}
+			else { self.rev = false }
 		}
 
 		let mut eight_bytes: [u8; 8] = [0; 8];

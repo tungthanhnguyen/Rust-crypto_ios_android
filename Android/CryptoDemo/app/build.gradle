@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
 	compileSdkVersion 30
-	buildToolsVersion '30.0.1'
+	buildToolsVersion '30.0.2'
 	defaultConfig {
 		applicationId "com.comtasoft.cryptodemo"
 		minSdkVersion 25
@@ -29,9 +29,9 @@ dependencies {
 	androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.2', {
 		exclude group: 'com.android.support', module: 'support-annotations'
 	})
-	implementation 'androidx.appcompat:appcompat:1.1.0'
+	implementation 'androidx.appcompat:appcompat:1.2.0'
 	implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-	testImplementation 'junit:junit:4.13-rc-1'
+	testImplementation 'junit:junit:4.13'
 	androidTestImplementation 'androidx.test:runner:1.2.0'
 	androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
