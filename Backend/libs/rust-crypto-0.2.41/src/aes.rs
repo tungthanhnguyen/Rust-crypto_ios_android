@@ -6,11 +6,14 @@
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use crate::aesni;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+use crate::util;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+use crate::blockmodes::CtrMode;
 
 use crate::aessafe;
-use crate::blockmodes::{PaddingProcessor, EcbEncryptor, EcbDecryptor, CbcEncryptor, CbcDecryptor, CtrMode, CtrModeX8};
+use crate::blockmodes::{PaddingProcessor, EcbEncryptor, EcbDecryptor, CbcEncryptor, CbcDecryptor, CtrModeX8};
 use crate::symmetriccipher::{Encryptor, Decryptor, SynchronousStreamCipher};
-use crate::util;
 
 /// AES key size
 #[derive(Clone, Copy)]

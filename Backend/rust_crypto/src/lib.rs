@@ -12,7 +12,6 @@ use rustc_serialize::base64::{FromBase64, ToBase64, STANDARD};
 use std::os::raw::c_char;
 use std::ffi::{CString, CStr};
 use std::ptr::null_mut;
-use std::str;
 use std::vec::Vec;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -214,7 +213,7 @@ pub mod android
 			}
 		};
 
-		let result = match str::from_utf8(&dec_dat)
+		let result = match std::str::from_utf8(&dec_dat)
 		{
 			Ok(v) => v,
 			Err(_) =>
@@ -240,7 +239,7 @@ pub enum EncryptError
 	RngInitializationFailed
 }
 
-pub extern fn encrypt_buf(public_key: &[u8; 32], message: &[u8]) -> Result<Vec<u8>, EncryptError>
+pub fn encrypt_buf(public_key: &[u8; 32], message: &[u8]) -> Result<Vec<u8>, EncryptError>
 {
 	let mut ephemeral_secret_key = [0u8; 32];
 	match thread_rng().try_fill(&mut ephemeral_secret_key[..])
@@ -277,7 +276,7 @@ pub enum DecryptError
 	Invalid
 }
 
-pub extern fn decrypt_buf(private_key: &[u8; 32], message: &[u8]) -> Result<Vec<u8>, DecryptError>
+pub fn decrypt_buf(private_key: &[u8; 32], message: &[u8]) -> Result<Vec<u8>, DecryptError>
 {
 	if message.len() < 48
 	{
