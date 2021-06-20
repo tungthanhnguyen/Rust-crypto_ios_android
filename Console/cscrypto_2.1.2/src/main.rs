@@ -486,8 +486,9 @@ fn gen_key(matches: &ArgMatches)
 
 	// Begin Process generate public and private key pem...
 
-	let mut private_key = [0u8; 32];
-	thread_rng().fill(&mut private_key[..]);
+	let mut gen = thread_rng();
+	let mut private_key = vec![0u8; 32];
+	gen.fill(private_key.as_mut_slice());
 	let public_key = curve25519_base(&private_key[..]);
 
 	let _ = pub_file.write_all(public_key.to_base64(STANDARD).as_bytes());

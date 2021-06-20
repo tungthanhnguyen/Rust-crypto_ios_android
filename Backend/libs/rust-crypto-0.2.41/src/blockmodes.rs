@@ -154,7 +154,7 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 			let enough_input = input.remaining() > block_size;
 			let enough_output = output.remaining() >= block_size;
 			enough_input && enough_output
-		};
+		}
 
 		fn split_at<'a>(vec: &'a [u8], at: usize) -> (&'a [u8], &'a [u8])
 		{
@@ -182,6 +182,8 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 			                             if has_enc { &self.out_hist[..] } else { &iv },
 			                             next_in, next_out);
 		}
+
+		//println!("Den day roi...");
 
 		// Process all remaing blocks. We can pull the history out of the buffers without having to
 		// do any copies
@@ -237,7 +239,7 @@ impl <P: BlockProcessor, X: PaddingProcessor> BlockEngine<P, X>
 
 			let rb = wout.into_read_buffer();
 			me.out_read_scratch = Some(rb);
-		};
+		}
 
 		loop
 		{

@@ -1,87 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
-	android:layout_height="wrap_content"
-	android:layout_marginTop="5dp"
-	android:orientation="vertical"
-	android:padding="5dp"
-	tools:context="com.comtasoft.cryptodemo.MainActivity">
+	android:layout_height="match_parent"
+	tools:context=".MainActivity">
 
-	<LinearLayout
-		android:layout_width="match_parent"
+	<TextView
+		android:id="@+id/lbl_inputText"
+		android:layout_width="100dp"
+		android:layout_height="19dp"
+		android:layout_marginStart="10dp"
+		android:text="@string/input_text"
+		app:layout_constraintBottom_toBottomOf="@+id/edtMess"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="@+id/edtMess" />
+
+	<EditText
+		android:id="@+id/edtMess"
+		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:padding="5dp">
+		android:layout_marginStart="10dp"
+		android:layout_marginTop="10dp"
+		android:layout_marginEnd="10dp"
+		android:ems="10"
+		android:importantForAutofill="no"
+		android:inputType="text"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/lbl_inputText"
+		app:layout_constraintTop_toTopOf="parent" />
 
-		<TextView
-			android:id="@+id/lbl_inputText"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="@string/input_text" />
-
-		<EditText
-			android:id="@+id/edtMess"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginStart="5dp"
-			android:importantForAutofill="no"
-			android:inputType="text"
-			android:labelFor="@id/lbl_inputText" />
-	</LinearLayout>
-
-	<LinearLayout
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content">
-
-		<Button
-			android:id="@+id/btnAction"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:onClick="OnAction"
-			android:text="@string/action"
-			android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
-
-	</LinearLayout>
-
-	<LinearLayout
-		android:layout_width="match_parent"
+	<Button
+		android:id="@+id/btnAction"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:padding="5dp">
+		android:layout_marginStart="10dp"
+		android:layout_marginTop="10dp"
+		android:onClick="onAction"
+		android:text="@string/action"
+		android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/edtMess" />
 
-		<TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_gravity="center_vertical"
-			android:text="@string/encrypted_text"/>
-
-		<TextView
-			android:id="@+id/lblEncryptedText"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_gravity="center_vertical"
-			android:layout_marginStart="5dp"
-			android:freezesText="true"/>
-	</LinearLayout>
-
-	<LinearLayout
-		android:layout_width="match_parent"
+	<TextView
+		android:id="@+id/lblEncryptedText"
+		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:padding="5dp">
+		android:layout_marginStart="10dp"
+		android:layout_marginTop="10dp"
+		android:layout_marginEnd="10dp"
+		android:freezesText="true"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/textView2"
+		app:layout_constraintTop_toBottomOf="@+id/btnAction" />
 
-		<TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_gravity="center_vertical"
-			android:text="@string/decrypted_text"/>
+	<TextView
+		android:id="@+id/textView2"
+		android:layout_width="100dp"
+		android:layout_height="19dp"
+		android:layout_marginStart="10dp"
+		android:text="@string/encrypted_text"
+		app:layout_constraintBottom_toBottomOf="@+id/lblEncryptedText"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="@+id/lblEncryptedText" />
 
-		<TextView
-			android:id="@+id/lblDecryptedText"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_gravity="center_vertical"
-			android:layout_marginStart="5dp"
-			android:freezesText="true"/>
-	</LinearLayout>
+	<TextView
+		android:id="@+id/lblDecryptedText"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="10dp"
+		android:layout_marginTop="10dp"
+		android:layout_marginEnd="10dp"
+		android:freezesText="true"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/textView4"
+		app:layout_constraintTop_toBottomOf="@+id/lblEncryptedText" />
 
-</LinearLayout>
+	<TextView
+		android:id="@+id/textView4"
+		android:layout_width="100dp"
+		android:layout_height="19dp"
+		android:layout_marginStart="10dp"
+		android:layout_marginTop="1dp"
+		android:text="@string/decrypted_text"
+		app:layout_constraintBottom_toBottomOf="@+id/lblDecryptedText"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="@+id/lblDecryptedText" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

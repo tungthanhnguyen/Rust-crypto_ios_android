@@ -46,8 +46,19 @@ fn main()
 					else if target.contains("arm") { cfg.compiler(Path::new("arm-linux-androideabi-clang")); }
 					else if target.contains("i686") { cfg.compiler(Path::new("i686-linux-android-clang")); }
 					else if target.contains("x86_64") { cfg.compiler(Path::new("x86_64-linux-android-clang")); }
+					env::set_var("AR", "llvm-ar");
 				}
-				else { cfg.compiler(Path::new("cc")); }
+				else if target.contains("wasm32")
+				{
+					env::set_var("CC", "/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/bin/clang");
+					env::set_var("AR", "/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/bin/llvm-ar");
+					cfg.flag("--sysroot=/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/share/wasi-sysroot");
+					// cfg.compiler(Path::new("/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/bin/clang"));
+				}
+				else
+				{
+					cfg.compiler(Path::new("cc"));
+				}
 			}
 		}
 		cfg.compile("lib_rust_crypto_helpers.a");

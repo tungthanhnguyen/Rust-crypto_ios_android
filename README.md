@@ -6,10 +6,10 @@ Rust-crypto_ios_android (was supported for arm64)
 Example project for building a library for iOS + Android in Rust. macOS is
 required for iOS development.
 
-* ✓ Rust 1.46
-* ✓ Android 7.1 – 10.0+ (API 25 – 30)
+* ✓ Rust 1.52.1
+* ✓ Android 8.0 – 10.0+ (API 26 – 30)
 * ✓ Swift 5.2
-* ✓ iOS 11.4 – 13.6
+* ✓ iOS 12 – 14.5
 
 *Note: The purpose of this project is not to create a pure Rust app, but rather
 use Rust as a shared native component between the mobile platforms.*
@@ -72,7 +72,7 @@ Setup
     rustup target add aarch64-apple-ios x86_64-apple-ios
 
     # Android.
-    rustup target add aarch64-linux-android x86_64-linux-android
+    rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
     ```
 
 7. Copy the content of `cargo-config.toml` (consists of linker information of
@@ -108,13 +108,14 @@ does not contain proper error checking.)
     # Integrated into Xcode project.
 
     # Android.
+    cargo build --target armv7-linux-androideabi --release
     cargo build --target aarch64-linux-android --release
     cargo build --target x86_64-linux-android --release
     ```
 
 4. Build the Xcode project.
 
-    Using Xcode 11.6
+    Using Xcode 12.4 (MacOS Catalina)
 
     When you create an Xcode project yourself, note the following points:
     * Add a new `Run Script` phase to your `Build Phases`. Place it before `Compile Sources`. Add something like the following to the script:
@@ -145,7 +146,7 @@ does not contain proper error checking.)
 
 5. Build the Android project.
 
-    Using Android Studio 4.0.1
+    Using Android Studio 4.2.1
 
     When you create an Android Studio project yourself, note the following
     points:
@@ -154,6 +155,7 @@ does not contain proper error checking.)
 
         Copy from Rust | Copy to Android
         ---|---
+        `target/armv7-linux-androideabi/release/librust_crypto.so` | `src/main/jniLibs/armeabi-v7a/librust_crypto.so`
         `target/aarch64-linux-android/release/librust_crypto.so` | `src/main/jniLibs/arm64-v8a/librust_crypto.so`
         `target/x86_64-linux-android/release/librust_crypto.so` | `src/main/jniLibs/x86_64/librust_crypto.so`
 
