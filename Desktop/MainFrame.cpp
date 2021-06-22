@@ -34,7 +34,7 @@ CMainFrame::CMainFrame(wxWindow* parent, wxWindowID id, const wxString& title, c
 			n_pMainSizer->AddGrowableRow(2, 1);
 			n_pMainSizer->AddGrowableCol(1, 1);
 
-			n_pMainSizer->Add(new wxStaticText(this, wxID_ANY, wxT("Input Text:")), 1,  wxALIGN_RIGHT);
+			n_pMainSizer->Add(new wxStaticText(this, wxID_ANY, wxT("Input Text:")), 1,  wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL);
 			n_pMainSizer->Add(m_pTxtInputText, 1, wxEXPAND);
 
 			n_pMainSizer->Add(m_pBtnAction, wxALIGN_RIGHT);
@@ -43,7 +43,7 @@ CMainFrame::CMainFrame(wxWindow* parent, wxWindowID id, const wxString& title, c
 			n_pMainSizer->Add(new wxStaticText(this, wxID_ANY, wxT("Encrypted Text:")), 1, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL | wxEXPAND);
 			n_pMainSizer->Add(m_pEncryptedText, 1, wxEXPAND);
 
-			n_pMainSizer->Add(new wxStaticText(this, wxID_ANY, wxT("Decrypted Text:")), 1, wxALIGN_RIGHT);
+			n_pMainSizer->Add(new wxStaticText(this, wxID_ANY, wxT("Decrypted Text:")), 1, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL);
 			n_pMainSizer->Add(m_pDecryptedText, 1, wxEXPAND);
 
 			n_pSizer->Add(n_pMainSizer, 1, wxALL | wxEXPAND, 10);

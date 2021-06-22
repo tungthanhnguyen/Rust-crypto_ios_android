@@ -6,7 +6,8 @@ edition = "2018"
 publish = false
 
 [dependencies]
-rand = { version = "0.7.3", features = ["wasm-bindgen"] }
+rand = "0.8.4"
+#rand = { version = "0.7.3", features = ["wasm-bindgen"] }
 rust-crypto = { version = "0.2.41", path = "../libs/rust-crypto-0.2.41" }
 rustc-serialize = { version = "0.3.24", path = "../libs/rustc-serialize-0.3.24" }
 
