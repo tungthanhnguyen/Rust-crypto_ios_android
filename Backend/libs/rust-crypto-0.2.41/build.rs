@@ -50,10 +50,10 @@ fn main()
 				}
 				else if target.contains("wasm32")
 				{
-					env::set_var("CC", "/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/bin/clang");
-					env::set_var("AR", "/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/bin/llvm-ar");
-					cfg.flag("--sysroot=/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/share/wasi-sysroot");
-					// cfg.compiler(Path::new("/run/media/tungthanhnguyen/PrivateData/formatlibs/wasi-sdk-11.0/bin/clang"));
+					env::set_var("CC", "/mnt/PrivateData/formatlibs/wasi-sdk-12.0/bin/clang");
+					env::set_var("AR", "/mnt/PrivateData/formatlibs/wasi-sdk-12.0/bin/llvm-ar");
+					cfg.flag("--target=wasm32-wasi");
+					cfg.flag("--sysroot=/mnt/PrivateData/formatlibs/wasi-sdk-12.0/share/wasi-sysroot");
 				}
 				else
 				{
